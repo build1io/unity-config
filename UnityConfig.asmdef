@@ -1,0 +1,16 @@
+{
+    "name": "UnityConfig",
+    "rootNamespace": "",
+    "references": [
+        "GUID:c7375feb935de4cf18b402cfa4b80863"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
