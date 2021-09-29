@@ -51,6 +51,9 @@ namespace Build1.UnityConfig.Repositories.Firebase
 
             try
             {
+                if (!FirebaseRemoteConfig.DefaultInstance.AllValues.ContainsKey("config"))
+                    throw new Exception("Key \"config\" not found in Firebase Remote Config."); 
+                
                 var json = FirebaseRemoteConfig.DefaultInstance.AllValues["config"].StringValue;
                 HandleComplete(json);
             }

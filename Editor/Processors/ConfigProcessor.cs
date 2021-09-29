@@ -15,6 +15,8 @@ namespace Build1.UnityConfig.Editor.Processors
         private static readonly string configSourceFilePath      = Application.dataPath + "/Resources/" + ConfigSource.FileName + ".txt";
         private static readonly string resourcesFolderPath       = Application.dataPath + "/Resources/";
         private static readonly string configSourceResetFilePath = Application.dataPath + "/Config/config-source-reset.txt";
+
+        public static event Action OnConfigSourceChanged;
         
         static ConfigProcessor()
         {
@@ -87,6 +89,8 @@ namespace Build1.UnityConfig.Editor.Processors
             AssetDatabase.Refresh(ImportAssetOptions.Default);
             
             Log($"Config Source set to {source}");
+            
+            OnConfigSourceChanged?.Invoke();
         }
 
         public static bool GetConfigSourceResetEnabled()

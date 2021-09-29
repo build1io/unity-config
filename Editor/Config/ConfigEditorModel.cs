@@ -171,7 +171,7 @@ namespace Build1.UnityConfig.Editor.Config
          * Config Loading.
          */
 
-        private static void LoadConfig(string configName, Action<ConfigNode> onComplete, Action<Exception> onError)
+        internal static void LoadConfig(string configName, Action<ConfigNode> onComplete, Action<Exception> onError)
         {
             // Firebase.
             if (configName == Build1.UnityConfig.ConfigSource.Firebase)
