@@ -7,10 +7,10 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Build1.UnityConfig.Editor
+namespace Build1.UnityConfig.Editor.Processors
 {
     [InitializeOnLoad]
-    public static class ConfigProcessor
+    internal static class ConfigProcessor
     {
         private static readonly string configSourceFilePath      = Application.dataPath + "/Resources/" + ConfigSource.FileName + ".txt";
         private static readonly string resourcesFolderPath       = Application.dataPath + "/Resources/";

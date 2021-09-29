@@ -6,13 +6,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Build1.UnityConfig.Editor.Processors;
 using Build1.UnityConfig.Repositories.Firebase;
 using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Build1.UnityConfig.Editor.Config
 {
-    public sealed class ConfigModel
+    internal sealed class ConfigEditorModel
     {
         public string ConfigSource             { get; private set; }
         public bool   ConfigSourceResetEnabled { get; private set; }
@@ -33,7 +34,7 @@ namespace Build1.UnityConfig.Editor.Config
 
         public bool InProgress { get; private set; }
 
-        public ConfigModel()
+        public ConfigEditorModel()
         {
             ConfigAssetsPostProcessor.onAssetsPostProcessed += OnAssetsPostProcessed;
             Reset();
@@ -184,7 +185,7 @@ namespace Build1.UnityConfig.Editor.Config
             var loader = new FirebaseRemoteConfigLoader();
             loader.onComplete += json =>
             {
-                var config = (ConfigNode)JsonConvert.DeserializeObject(json, UnityConfig.ConfigType);
+                var config = (ConfigNode)JsonConvert.DeserializeObject(json, UnityConfig.Instance.ConfigType);
                 onComplete?.Invoke(config);
             };
             loader.onError += exception => { onError?.Invoke(exception); };
@@ -197,7 +198,7 @@ namespace Build1.UnityConfig.Editor.Config
             {
                 var path = ConfigProcessor.GetEditorConfigFilePath(configName);
                 var json = File.ReadAllText(path);
-                var config = (ConfigNode)JsonConvert.DeserializeObject(json, UnityConfig.ConfigType);
+                var config = (ConfigNode)JsonConvert.DeserializeObject(json, UnityConfig.Instance.ConfigType);
                 onComplete?.Invoke(config);
             }
             catch (Exception exception)

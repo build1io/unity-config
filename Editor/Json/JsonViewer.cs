@@ -10,10 +10,10 @@ using UnityEngine;
 
 namespace Build1.UnityConfig.Editor.Json
 {
-    public sealed class JsonWindow : EGUIWindow
+    internal sealed class JsonViewer : EGUIWindow
     {
-        private string SectionName { get; set; }
-        private string Json        { get; set; }
+        private string Title { get; set; }
+        private string Json  { get; set; }
 
         [SerializeField] private TreeViewState _jsonTreeViewState;
         [NonSerialized]  private JsonTreeView  _jsonTree;
@@ -49,7 +49,7 @@ namespace Build1.UnityConfig.Editor.Json
         {
             EGUI.Horizontally(() =>
             {
-                EGUI.Title(SectionName, TitleType.H3);
+                EGUI.Title(Title ?? "Json Viewer", TitleType.H3);
                 EGUI.Space();
                 EGUI.Label("* click anywhere outside to close", FontStyle.Italic);
             });
@@ -86,10 +86,10 @@ namespace Build1.UnityConfig.Editor.Json
          * Static.
          */
 
-        public static void Open(string sectionName, string json)
+        public static void Open(string title, string json)
         {
-            var window = EGUIWindow.Open<JsonWindow>("Json Viewer", 800, 900, true, true);
-            window.SectionName = sectionName;
+            var window = EGUIWindow.Open<JsonViewer>("Json Viewer", 800, 900, true, true);
+            window.Title = title;
             window.Json = json;
         }
     }

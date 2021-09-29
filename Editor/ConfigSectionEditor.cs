@@ -1,14 +1,16 @@
 #if UNITY_EDITOR
 
-namespace Build1.UnityConfig.Editor.Config.Sections
+namespace Build1.UnityConfig.Editor
 {
-    public abstract class Section
+    public abstract class ConfigSectionEditor
     {
+        public abstract string SectionName { get; }
+        
         public abstract void   OnEGUI(object dto);
         public abstract string OnValidate(object dto);
     }
 
-    public abstract class Section<T> : Section where T : ConfigNode
+    public abstract class ConfigSectionEditor<T> : ConfigSectionEditor where T : ConfigNode
     {
         protected T Data { get; private set; }
 

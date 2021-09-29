@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using Build1.UnityConfig.Editor.Config.Sections;
 using Build1.UnityConfig.Editor.Json;
 using Build1.UnityEGUI;
 using Build1.UnityEGUI.Results;
@@ -12,15 +11,15 @@ using UnityEngine;
 
 namespace Build1.UnityConfig.Editor.Config.States
 {
-    public sealed class ConfigState : State
+    internal sealed class ConfigState : ConfigEditorState
     {
         private static Vector2 _scrollPosition = new Vector2(0, 1);
 
-        private readonly Dictionary<string, Section> _sections;
+        private readonly Dictionary<string, ConfigSectionEditor> _sections;
 
-        public ConfigState(ConfigModel model) : base(model)
+        public ConfigState(ConfigEditorModel model) : base(model)
         {
-            _sections = UnityConfig.Sections;
+            _sections = UnityConfig.Instance.Sections;
         }
 
         public override void Draw()
@@ -137,7 +136,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             EGUI.Space();
 
             if (configViewClicked)
-                JsonWindow.Open(model.SelectedConfigName, model.SelectedConfig.ToJson(false));
+                JsonViewer.Open(model.SelectedConfigName, model.SelectedConfig.ToJson(false));
 
             if (configCopyClicked)
                 EGUI.CopyToClipboard(model.SelectedConfig.ToJson(false));
@@ -160,7 +159,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                 model.RevertSection();
 
             if (sectionViewClicked)
-                JsonWindow.Open(model.SelectedConfigName + "." + model.SelectedConfigSectionName, model.SelectedConfigSection.ToJson(false));
+                JsonViewer.Open(model.SelectedConfigName + "." + model.SelectedConfigSectionName, model.SelectedConfigSection.ToJson(false));
         }
 
         private bool AskSaveChanges()
@@ -185,7 +184,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                               });
         }
 
-        private Section GetSection(string name)
+        private ConfigSectionEditor GetSection(string name)
         {
             return _sections.TryGetValue(name, out var section) ? section : null;
         }

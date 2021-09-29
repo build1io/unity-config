@@ -9,11 +9,11 @@ using UnityEngine;
 
 namespace Build1.UnityConfig.Editor.Config
 {
-    public sealed class ConfigWindow : EGUIWindow
+    internal sealed class ConfigEditor : EGUIWindow
     {
-        private ConfigModel _model;
-        private State       _stateDefault;
-        private State       _stateConfigView;
+        private ConfigEditorModel _model;
+        private ConfigEditorState _stateDefault;
+        private ConfigEditorState _stateConfigView;
 
         protected override void OnAwake()
         {
@@ -22,7 +22,7 @@ namespace Build1.UnityConfig.Editor.Config
 
         protected override void OnInitialize()
         {
-            _model ??= new ConfigModel();
+            _model ??= new ConfigEditorModel();
             _stateDefault ??= new DefaultState(_model);
             _stateConfigView ??= new ConfigState(_model);
         }
@@ -53,7 +53,7 @@ namespace Build1.UnityConfig.Editor.Config
 
         public static void Open()
         {
-            EGUIWindow.Open<ConfigWindow>($"{Application.productName} Config", 800, 1000, false, true);
+            EGUIWindow.Open<ConfigEditor>($"{Application.productName} Config", 800, 1000, false, true);
         }
     }
 }

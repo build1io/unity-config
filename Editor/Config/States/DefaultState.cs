@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Build1.UnityConfig.Editor.Config.States
 {
-    public sealed class DefaultState : State
+    internal sealed class DefaultState : ConfigEditorState
     {
         private static Vector2 _scrollPosition      = new Vector2(0, 1);
         private static int     _selectedConfigIndex = -1;
@@ -18,7 +18,7 @@ namespace Build1.UnityConfig.Editor.Config.States
         private static bool   _configNameInvalid   = false;
         private static bool   _configAlreadyExists = false;
         
-        public DefaultState(ConfigModel model) : base(model)
+        public DefaultState(ConfigEditorModel model) : base(model)
         {
         }
 

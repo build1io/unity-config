@@ -4,9 +4,9 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace Build1.UnityConfig.Editor
+namespace Build1.UnityConfig.Editor.Processors
 {
-    public sealed class ConfigBuildProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+    internal sealed class ConfigBuildProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
         public int callbackOrder => 0;
 

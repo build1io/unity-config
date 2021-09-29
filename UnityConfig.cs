@@ -2,29 +2,60 @@
 
 using System;
 using System.Collections.Generic;
-using Build1.UnityConfig.Editor.Config.Sections;
+using Build1.UnityConfig.Editor;
+using Build1.UnityConfig.Editor.Config;
+using Build1.UnityConfig.Editor.Json;
 
 namespace Build1.UnityConfig
 {
-    public static class UnityConfig
+    public class UnityConfig
     {
-        public static Type                        ConfigType { get; private set; }
-        public static Dictionary<string, Section> Sections   { get; private set; }
+        internal static UnityConfig Instance { get; private set; }
 
-        public static void Configure(Type configType, Dictionary<string, Section> sections = null)
+        internal Type                                    ConfigType { get; }
+        internal Dictionary<string, ConfigSectionEditor> Sections   { get; private set; }
+
+        private UnityConfig(Type configType)
         {
-            if (!configType.IsSubclassOf(typeof(ConfigNode)))
-                throw new Exception("Config must inherit from ConfigNode class.");
-
             ConfigType = configType;
-            Sections = sections;
         }
 
-        public static void Configure<T>(Dictionary<string, Section> sections = null) where T : ConfigNode
+        /*
+         * Public.
+         */
+
+        public UnityConfig AddSectionEditor<T>() where T : ConfigSectionEditor, new()
         {
-            ConfigType = typeof(T);
-            Sections = sections;
+            Sections ??= new Dictionary<string, ConfigSectionEditor>();
+
+            var sectionEditor = new T();
+            Sections.Add(sectionEditor.SectionName, sectionEditor);
+            return this;
         }
+
+        /*
+         * Static.
+         */
+
+        public static UnityConfig Configure<T>() where T : ConfigNode
+        {
+            if (Instance != null)
+                throw new Exception("UnityConfig already configured");
+
+            Instance = new UnityConfig(typeof(T));
+            return Instance;
+        }
+
+        public static void OpenConfigEditor()
+        {
+            if (Instance == null)
+                throw new Exception("UnityConfig tool is not configured. Call UnityConfig.Configure on Editor load.");
+
+            ConfigEditor.Open();
+        }
+
+        public static void OpenJsonViewer(string json)               { JsonViewer.Open(null, json); }
+        public static void OpenJsonViewer(string title, string json) { JsonViewer.Open(title, json); }
     }
 }
 

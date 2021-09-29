@@ -2,10 +2,10 @@
 
 using UnityEditor;
 
-namespace Build1.UnityConfig.Editor
+namespace Build1.UnityConfig.Editor.Processors
 {
     [InitializeOnLoad]
-    public static class ConfigPlayProcessor
+    internal static class ConfigPlayProcessor
     {
         static ConfigPlayProcessor()
         {

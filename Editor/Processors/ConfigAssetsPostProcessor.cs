@@ -3,9 +3,9 @@
 using System;
 using UnityEditor;
 
-namespace Build1.UnityConfig.Editor
+namespace Build1.UnityConfig.Editor.Processors
 {
-    public sealed class ConfigAssetsPostProcessor : AssetPostprocessor
+    internal sealed class ConfigAssetsPostProcessor : AssetPostprocessor
     {
         public static event Action onAssetsPostProcessed;
         

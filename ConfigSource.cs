@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Build1.UnityConfig
 {
-    public static class ConfigSource
+    internal static class ConfigSource
     {
         public const string FileName = "config-source";
         

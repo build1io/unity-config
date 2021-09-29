@@ -2,11 +2,11 @@
 
 namespace Build1.UnityConfig.Editor.Config.States
 {
-    public abstract class State
+    internal abstract class ConfigEditorState
     {
-        protected readonly ConfigModel model;
+        protected readonly ConfigEditorModel model;
         
-        protected State(ConfigModel model)
+        protected ConfigEditorState(ConfigEditorModel model)
         {
             this.model = model;
         }
