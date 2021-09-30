@@ -64,7 +64,7 @@ namespace Build1.UnityConfig.Editor.Config.States
 
             if (backClicked)
             {
-                if (modified)
+                if (canBeSaved && modified)
                     backClicked = AskSaveChanges();
                 if (backClicked)
                     model.Reset();
@@ -73,7 +73,7 @@ namespace Build1.UnityConfig.Editor.Config.States
 
             if (deleteConfig)
             {
-                if (EGUI.Alert(Application.identifier, $"Are you sure you want to delete config {model.SelectedConfigName}?", "Delete", "Cancel"))
+                if (EGUI.Alert(Application.productName, $"Are you sure you want to delete config {model.SelectedConfigName}?", "Delete", "Cancel"))
                     model.RemoveConfig(model.SelectedConfigName);
                 return;
             }
@@ -93,8 +93,8 @@ namespace Build1.UnityConfig.Editor.Config.States
                 {
                     EGUI.Button("Save", out sectionSaveClicked, 130, EGUI.DropDownHeight01);
                 });
-
-                EGUI.Enabled(modified, () =>
+                
+                EGUI.Enabled(canBeSaved && modified, () =>
                 {
                     EGUI.Button("Revert", out sectionRevertClicked, 130, EGUI.DropDownHeight01);
                 });
@@ -164,7 +164,7 @@ namespace Build1.UnityConfig.Editor.Config.States
 
         private bool AskSaveChanges()
         {
-            return EGUI.Alert(Application.identifier,
+            return EGUI.Alert(Application.productName,
                               $"Save changes to {model.SelectedConfigSectionName} section?",
                               "Save", "Cancel", "Revert", result =>
                               {

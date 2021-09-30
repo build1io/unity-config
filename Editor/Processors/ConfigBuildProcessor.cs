@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 
+using Build1.UnityConfig.Editor.Config;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -18,13 +19,30 @@ namespace Build1.UnityConfig.Editor.Processors
 
             var configSource = ConfigProcessor.GetConfigSource();
             var configSourceResetEnabled = ConfigProcessor.GetConfigSourceResetEnabled();
-            if (!configSourceResetEnabled || configSource == ConfigSource.Default) 
-                return;
+            if (configSourceResetEnabled && configSource != ConfigSource.Default)
+            {
+                Debug.Log($"Config: Resetting Config Source to {ConfigSource.Default}...");
             
-            Debug.Log($"Config: Resetting Config Source to {ConfigSource.Default}...");
-            
-            _configSourceOriginal = configSource;
-            ConfigProcessor.SetConfigSource(ConfigSource.Default);
+                _configSourceOriginal = configSource;
+                ConfigProcessor.SetConfigSource(ConfigSource.Default);    
+            }
+
+            // var configEmbedDefault = ConfigProcessor.GetEmbedDefaultEnabled();
+            // if (configEmbedDefault && configSource == ConfigSource.Default)
+            // {
+            //     Debug.Log($"Config: Updating embed copy of {ConfigSource.Default}...");
+            //
+            //     ConfigEditorModel.LoadConfig(configSource, config =>
+            //     {
+            //         var json = config.ToJson(false);
+            //         ConfigProcessor.SaveConfigToResources(json);
+            //         
+            //         Debug.Log("Config: Updated.");
+            //     }, exception =>
+            //     {
+            //         Debug.LogError($"Config: Update failed. Error: {exception}");
+            //     });
+            // }
         }
 
         public void OnPostprocessBuild(BuildReport report)

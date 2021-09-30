@@ -46,11 +46,11 @@ namespace Build1.UnityConfig.Editor.Config.States
                     model.SetConfigSourceResetEnabled(resetSelected);
                 });
                 
-                EGUI.Space(5);
-                EGUI.Checkbox("Embed copy of Firebase config", model.ConfigEmbedDefaultEnabled, embedSelected =>
-                {
-                    model.SetEmbedDefaultEnabled(embedSelected);
-                });
+                // EGUI.Space(5);
+                // EGUI.Checkbox("Embed copy of Firebase config", model.ConfigEmbedDefaultEnabled, embedSelected =>
+                // {
+                //     model.SetEmbedDefaultEnabled(embedSelected);
+                // });
                 
                 EGUI.Space(40);
 

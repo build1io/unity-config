@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
 
+using UnityEngine;
+
 namespace Build1.UnityConfig.Editor
 {
     public abstract class ConfigSectionEditor
@@ -16,7 +18,16 @@ namespace Build1.UnityConfig.Editor
 
         public override void OnEGUI(object dto)
         {
-            Data = (T)dto;
+            try
+            {
+                Data = (T)dto;
+            }
+            catch
+            {
+                Debug.LogError($"Wrong section name for {GetType().FullName} [\"{SectionName}\"]. Cast type failed: {dto.GetType().FullName} != {typeof(T).FullName}");
+                return;
+            }
+            
             OnEGUI(Data);
         }
 

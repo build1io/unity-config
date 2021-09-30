@@ -4,8 +4,6 @@ using Firebase.Extensions;
 using Firebase.RemoteConfig;
 using UnityEngine;
 
-// TODO: manage firebase presence
-
 namespace Build1.UnityConfig.Repositories.Firebase
 {
     public sealed class FirebaseRemoteConfigLoader
@@ -20,7 +18,7 @@ namespace Build1.UnityConfig.Repositories.Firebase
                 var configSettings = new ConfigSettings();
                 if (Debug.isDebugBuild)
                     configSettings.MinimumFetchInternalInMilliseconds = 0; // Refresh immediately when debugging.
-
+                
                 FirebaseRemoteConfig.DefaultInstance.SetConfigSettingsAsync(configSettings).ContinueWithOnMainThread(OnConfigSet);
             }
             catch (Exception exception)
