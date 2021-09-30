@@ -15,8 +15,9 @@ namespace Build1.UnityConfig.Editor.Config
 {
     internal sealed class ConfigEditorModel
     {
-        public string ConfigSource             { get; private set; }
-        public bool   ConfigSourceResetEnabled { get; private set; }
+        public string ConfigSource              { get; private set; }
+        public bool   ConfigSourceResetEnabled  { get; private set; }
+        public bool   ConfigEmbedDefaultEnabled { get; private set; }
 
         public List<string> Configs        { get; private set; }
         public bool         ConfigSelected => SelectedConfig != null;
@@ -50,6 +51,7 @@ namespace Build1.UnityConfig.Editor.Config
         {
             ConfigSource = ConfigProcessor.GetConfigSource();
             ConfigSourceResetEnabled = ConfigProcessor.GetConfigSourceResetEnabled();
+            ConfigEmbedDefaultEnabled = ConfigProcessor.GetEmbedDefaultEnabled();
 
             Configs = ConfigProcessor.GetConfigs();
 
@@ -79,6 +81,12 @@ namespace Build1.UnityConfig.Editor.Config
             ConfigSourceResetEnabled = value;
         }
 
+        public void SetEmbedDefaultEnabled(bool value)
+        {
+            ConfigProcessor.SetEmbedDefaultEnabled(value);
+            ConfigEmbedDefaultEnabled = value;
+        }
+
         /*
          * Config.
          */
@@ -100,7 +108,7 @@ namespace Build1.UnityConfig.Editor.Config
             }, exception =>
             {
                 Debug.LogException(exception);
-                
+
                 InProgress = false;
                 onComplete?.Invoke();
             });
