@@ -69,10 +69,9 @@ namespace Build1.UnityConfig.Editor.Config.States
                     return;
                 
                 var configName = configs[_selectedConfigIndex];
-                model.SelectConfig(configName, () =>
-                {
-                    _selectedConfigIndex = -1;    
-                }); 
+                model.SelectConfig(configName);
+                
+                _selectedConfigIndex = -1;
             });
         }
 

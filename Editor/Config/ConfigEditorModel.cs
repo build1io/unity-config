@@ -83,7 +83,7 @@ namespace Build1.UnityConfig.Editor.Config
          * Config.
          */
 
-        public void SelectConfig(string configName, Action onComplete)
+        public void SelectConfig(string configName, Action onComplete = null)
         {
             InProgress = true;
 
@@ -96,12 +96,13 @@ namespace Build1.UnityConfig.Editor.Config
                 SelectSection(SelectedConfigSections.IndexOf(LoadLastSelectedSection()));
 
                 InProgress = false;
-
                 onComplete?.Invoke();
             }, exception =>
             {
                 Debug.LogException(exception);
+                
                 InProgress = false;
+                onComplete?.Invoke();
             });
         }
 
