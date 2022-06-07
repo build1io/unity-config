@@ -66,15 +66,23 @@ namespace Build1.UnityConfig.Editor.Config.States
             {
                 if (canBeSaved && modified)
                     backClicked = AskSaveChanges();
+
                 if (backClicked)
+                {
+                    EGUI.PropertyWindowCloseAll();
                     model.Reset();
+                }
+                
                 return;
             }
 
             if (deleteConfig)
             {
                 if (EGUI.Alert(Application.productName, $"Are you sure you want to delete config {model.SelectedConfigName}?", "Delete", "Cancel"))
+                {
+                    EGUI.PropertyWindowCloseAll();
                     model.RemoveConfig(model.SelectedConfigName);
+                }
                 return;
             }
 
@@ -83,10 +91,15 @@ namespace Build1.UnityConfig.Editor.Config.States
                 EGUI.DropDown(configSections, model.SelectedConfigSectionIndex, EGUI.DropDownHeight01, newIndex =>
                 {
                     var select = true;
+                    
                     if (modified)
                         select = AskSaveChanges();
+                    
                     if (select)
+                    {
+                        EGUI.PropertyWindowCloseAll();
                         model.SelectSection(newIndex);
+                    }
                 });
 
                 EGUI.Enabled(canBeSaved && modified, () =>
