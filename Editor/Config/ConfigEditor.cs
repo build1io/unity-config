@@ -22,7 +22,15 @@ namespace Build1.UnityConfig.Editor.Config
 
         protected override void OnInitialize()
         {
-            _model ??= new ConfigEditorModel();
+            if (_model == null)
+            {
+                _model = new ConfigEditorModel();
+                _model.OnReset += EGUI.PropertyWindowCloseAll;
+                _model.OnConfigRemoved += EGUI.PropertyWindowCloseAll;
+                _model.OnSectionChanged += EGUI.PropertyWindowCloseAll;
+                _model.OnSectionReverted += EGUI.PropertyWindowCloseAll;
+            }
+            
             _stateDefault ??= new DefaultState(_model);
             _stateConfigView ??= new ConfigState(_model);
         }

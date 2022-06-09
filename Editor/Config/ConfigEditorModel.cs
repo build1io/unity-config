@@ -35,6 +35,12 @@ namespace Build1.UnityConfig.Editor.Config
 
         public bool InProgress { get; private set; }
 
+        public event Action OnReset;
+        public event Action OnConfigRemoved;
+        public event Action OnSectionChanged;
+        public event Action OnSectionReverted;
+        public event Action OnSectionSaved;
+
         public ConfigEditorModel()
         {
             ConfigAssetsPostProcessor.onAssetsPostProcessed += OnAssetsPostProcessed;
@@ -63,6 +69,8 @@ namespace Build1.UnityConfig.Editor.Config
             SelectedConfigSectionBackup = null;
             SelectedConfigSectionName = null;
             SelectedConfigSectionIndex = -1;
+            
+            OnReset?.Invoke();
         }
 
         /*
@@ -140,13 +148,13 @@ namespace Build1.UnityConfig.Editor.Config
             {
                 var json = config.ToJson(true);
                 ConfigProcessor.AddConfig(name, json, OnConfigAdded);
-            }, OnConfigFailed);
+            }, OnConfigFail);
         }
 
         public void RemoveConfig(string name)
         {
             InProgress = true;
-            ConfigProcessor.RemoveConfig(name, OnConfigRemoved, OnConfigFailed);
+            ConfigProcessor.RemoveConfig(name, OnConfigRemovedHandler, OnConfigFail);
         }
 
         private void OnConfigAdded(string name)
@@ -155,13 +163,15 @@ namespace Build1.UnityConfig.Editor.Config
             InProgress = false;
         }
 
-        private void OnConfigRemoved(string name)
+        private void OnConfigRemovedHandler(string name)
         {
             Reset();
             InProgress = false;
+
+            OnConfigRemoved?.Invoke();
         }
 
-        private void OnConfigFailed(Exception exception)
+        private void OnConfigFail(Exception exception)
         {
             Debug.LogException(exception);
 
@@ -231,6 +241,8 @@ namespace Build1.UnityConfig.Editor.Config
             SelectedConfigSectionIndex = index;
 
             SaveLastSelectedSection(sectionName);
+            
+            OnSectionChanged?.Invoke();
         }
 
         public void SaveSection()
@@ -248,17 +260,20 @@ namespace Build1.UnityConfig.Editor.Config
 
             property.SetValue(config, SelectedConfigSection);
 
-            SelectedConfigSectionBackup = SelectedConfigSection;
-            SelectedConfigSection = CloneSection(SelectedConfigSectionBackup);
+            SelectedConfigSectionBackup = CloneSection(SelectedConfigSection);
 
             ConfigProcessor.SaveConfig(SelectedConfigName, config.ToJson(true));
 
             InProgress = false;
+            
+            OnSectionSaved?.Invoke();
         }
 
         public void RevertSection()
         {
             SelectedConfigSection = CloneSection(SelectedConfigSectionBackup);
+            
+            OnSectionReverted?.Invoke();
         }
 
         public bool CheckSelectedSectionModified()
