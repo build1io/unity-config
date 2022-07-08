@@ -98,7 +98,8 @@ namespace Build1.UnityConfig.Editor.Config.States
                     EGUI.Button("Save", out sectionSaveClicked, 130, EGUI.DropDownHeight01);
                 });
                 
-                EGUI.Enabled(canBeSaved && modified, () =>
+                // Firebase config can be edited locally and reverted, but can't be saved.
+                EGUI.Enabled(modified, () =>
                 {
                     EGUI.Button("Revert", out sectionRevertClicked, 130, EGUI.DropDownHeight01);
                 });
