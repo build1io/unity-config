@@ -2,7 +2,7 @@
 
 using Build1.UnityConfig.Editor.Config.States;
 using Build1.UnityEGUI;
-using Build1.UnityEGUI.Types;
+using Build1.UnityEGUI.Components.Title;
 using Build1.UnityEGUI.Window;
 using UnityEditor;
 using UnityEngine;
@@ -37,7 +37,7 @@ namespace Build1.UnityConfig.Editor.Config
 
         protected override void OnEGUI()
         {
-            EGUI.Title($"{Application.productName} Config", TitleType.H1, 5);
+            EGUI.Title($"{Application.productName} Config", TitleType.H1, EGUI.OffsetX(5));
             EGUI.Space(10);
 
             if (Application.isPlaying)

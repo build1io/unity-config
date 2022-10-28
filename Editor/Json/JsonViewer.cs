@@ -2,8 +2,8 @@
 
 using System;
 using Build1.UnityEGUI;
+using Build1.UnityEGUI.Components.Title;
 using Build1.UnityEGUI.Json;
-using Build1.UnityEGUI.Types;
 using Build1.UnityEGUI.Window;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -51,14 +51,14 @@ namespace Build1.UnityConfig.Editor.Json
             {
                 EGUI.Title(Title ?? "Json Viewer", TitleType.H3);
                 EGUI.Space();
-                EGUI.Label("* click anywhere outside to close", FontStyle.Italic);
+                EGUI.Label("* click anywhere outside to close", EGUI.FontStyle(FontStyle.Italic));
             });
             EGUI.Space(5);
 
             var titleRect = EGUI.GetLastRect();
 
             EGUI.Space();
-            EGUI.Title("Json:", TitleType.H3, 5);
+            EGUI.Title("Json:", TitleType.H3, EGUI.OffsetX(5));
             EGUI.Space(3);
 
             var jsonRect = EGUI.GetLastRect();

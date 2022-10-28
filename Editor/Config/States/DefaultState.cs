@@ -2,7 +2,8 @@
 
 using System.Linq;
 using Build1.UnityEGUI;
-using Build1.UnityEGUI.Types;
+using Build1.UnityEGUI.Components.Label;
+using Build1.UnityEGUI.Components.Title;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace Build1.UnityConfig.Editor.Config.States
 {
     internal sealed class DefaultState : ConfigEditorState
     {
-        private static Vector2 _scrollPosition      = new Vector2(0, 1);
+        private static Vector2 _scrollPosition      = new(0, 1);
         private static int     _selectedConfigIndex = -1;
 
         private static string _configName          = string.Empty;
@@ -29,7 +30,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             
             EGUI.Scroll(ref _scrollPosition, () =>
             {
-                EGUI.Title("Config Source", TitleType.H3, 5);
+                EGUI.Title("Config Source", TitleType.H3, EGUI.OffsetX(5));
                 EGUI.Space(5);
                 
                 EGUI.Label("Selected config (any except Firebase) will be included and used in the build.\nFirebase will make app load config from Firebase remote.");
@@ -56,7 +57,7 @@ namespace Build1.UnityConfig.Editor.Config.States
 
                 configs = configs.Concat(new[] { "New..." }).ToList();
 
-                EGUI.Title("Config Editor", TitleType.H3, 5);
+                EGUI.Title("Config Editor", TitleType.H3, EGUI.OffsetX(5));
                 EGUI.Space(5);
                 
                 EGUI.Label("Select config to view / edit.");
@@ -86,7 +87,7 @@ namespace Build1.UnityConfig.Editor.Config.States
         {
             EGUI.Space(30);
             
-            EGUI.Title("New Config", TitleType.H3, 5);
+            EGUI.Title("New Config", TitleType.H3, EGUI.OffsetX(5));
             EGUI.Space(5);
 
             var add = false;
@@ -95,7 +96,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             
             EGUI.Horizontally(() =>
             {
-                EGUI.Label("Name:", 80, EGUI.DropDownHeight02, false, TextAnchor.MiddleLeft);
+                EGUI.Label("Name:", EGUI.Width(80), EGUI.Height(EGUI.DropDownHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft));
                 EGUI.TextField(_configName, EGUI.DropDownHeight02, TextAnchor.MiddleLeft, out controlName, configName =>
                 {
                     _configName = configName;
@@ -106,7 +107,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             
             EGUI.Horizontally(() =>
             {
-                EGUI.Label("Copy from:", 80, EGUI.DropDownHeight02, false, TextAnchor.MiddleLeft);
+                EGUI.Label("Copy from:", EGUI.Width(80), EGUI.Height(EGUI.DropDownHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft));
                 EGUI.DropDown(configs, ref _configCopyFromIndex, EGUI.DropDownHeight02);    
             });
             
@@ -121,13 +122,25 @@ namespace Build1.UnityConfig.Editor.Config.States
                 if (_configNameInvalid)
                 {
                     EGUI.Space(8);
-                    EGUI.Label("Invalid name. Can't be empty of whitespace. No special symbols or spaces allowed.", EGUI.ButtonHeight01, LabelType.Error, true, TextAnchor.MiddleCenter);
+                    
+                    EGUI.Label("Invalid name. Can't be empty of whitespace. No special symbols or spaces allowed.", 
+                               LabelType.Error, 
+                               EGUI.Height(EGUI.ButtonHeight01), 
+                               EGUI.StretchedWidth(), 
+                               EGUI.TextAnchor(TextAnchor.MiddleCenter));
+                    
                     EGUI.Space(8);
                 }
                 else if (_configAlreadyExists)
                 {
                     EGUI.Space(8);
-                    EGUI.Label($"Config with name '{_configName}' already exist.", EGUI.ButtonHeight01, LabelType.Error, true, TextAnchor.MiddleCenter);
+                    
+                    EGUI.Label($"Config with name '{_configName}' already exist.", 
+                               LabelType.Error, 
+                               EGUI.Height(EGUI.ButtonHeight01), 
+                               EGUI.StretchedWidth(), 
+                               EGUI.TextAnchor(TextAnchor.MiddleCenter));
+                    
                     EGUI.Space(8);
                 }
                 else
