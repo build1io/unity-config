@@ -15,11 +15,6 @@ namespace Build1.UnityConfig.Editor.Config
         private ConfigEditorState _stateDefault;
         private ConfigEditorState _stateConfigView;
 
-        protected override void OnAwake()
-        {
-            Padding = 10;
-        }
-
         protected override void OnInitialize()
         {
             if (_model == null)
@@ -61,7 +56,9 @@ namespace Build1.UnityConfig.Editor.Config
 
         public static void Open()
         {
-            EGUIWindow.Open<ConfigEditor>($"{Application.productName} Config", 800, 1000, false, true);
+            EGUI.Window<ConfigEditor>($"{Application.productName} Config", false)
+                .Size(800, 1000)
+                .Get();
         }
     }
 }

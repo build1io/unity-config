@@ -18,7 +18,7 @@ namespace Build1.UnityConfig.Editor.Config.States
         private static int    _configCopyFromIndex = 0;
         private static bool   _configNameInvalid   = false;
         private static bool   _configAlreadyExists = false;
-        
+
         public DefaultState(ConfigEditorModel model) : base(model)
         {
         }
@@ -27,58 +27,52 @@ namespace Build1.UnityConfig.Editor.Config.States
         {
             var configs = model.Configs;
             var currentConfigSourceIndex = configs.IndexOf(model.ConfigSource);
-            
+
             EGUI.Scroll(ref _scrollPosition, () =>
             {
                 EGUI.Title("Config Source", TitleType.H3, EGUI.OffsetX(5));
                 EGUI.Space(5);
-                
+
                 EGUI.Label("Selected config (any except Firebase) will be included and used in the build.\nFirebase will make app load config from Firebase remote.");
                 EGUI.Space(3);
-                
-                EGUI.DropDown(configs, currentConfigSourceIndex, EGUI.DropDownHeight01, newIndex =>
-                {
-                    model.SetConfigSource(configs[newIndex]);
-                });
+
+                EGUI.DropDown(configs, currentConfigSourceIndex, EGUI.DropDownHeight01, newIndex => { model.SetConfigSource(configs[newIndex]); });
                 EGUI.Space(18);
 
-                EGUI.Checkbox("Reset to Firebase in Release builds", model.ConfigSourceResetEnabled, resetSelected =>
-                {
-                    model.SetConfigSourceResetEnabled(resetSelected);
-                });
-                
+                EGUI.Checkbox("Reset to Firebase in Release builds", model.ConfigSourceResetEnabled, resetSelected => { model.SetConfigSourceResetEnabled(resetSelected); });
+
                 // EGUI.Space(5);
                 // EGUI.Checkbox("Embed copy of Firebase config", model.ConfigEmbedDefaultEnabled, embedSelected =>
                 // {
                 //     model.SetEmbedDefaultEnabled(embedSelected);
                 // });
-                
+
                 EGUI.Space(40);
 
                 configs = configs.Concat(new[] { "New..." }).ToList();
 
                 EGUI.Title("Config Editor", TitleType.H3, EGUI.OffsetX(5));
                 EGUI.Space(5);
-                
+
                 EGUI.Label("Select config to view / edit.");
                 EGUI.Space(5);
-                
+
                 EGUI.MessageBox("Firebase config can't be edited from Unity Editor but can be used for another config creation.", MessageType.Info);
 
                 EGUI.SelectionGrid(configs, ref _selectedConfigIndex, 220, 3, 10);
-                
+
                 if (_selectedConfigIndex == configs.Count - 1)
                 {
                     OnAddConfig();
                     return;
                 }
 
-                if (_selectedConfigIndex <= -1) 
+                if (_selectedConfigIndex <= -1)
                     return;
-                
+
                 var configName = configs[_selectedConfigIndex];
                 model.SelectConfig(configName);
-                
+
                 _selectedConfigIndex = -1;
             });
         }
@@ -86,17 +80,17 @@ namespace Build1.UnityConfig.Editor.Config.States
         private void OnAddConfig()
         {
             EGUI.Space(30);
-            
+
             EGUI.Title("New Config", TitleType.H3, EGUI.OffsetX(5));
             EGUI.Space(5);
 
             var add = false;
             var controlName = string.Empty;
             var configs = model.Configs.Concat(new[] { "None" }).ToList();
-            
+
             EGUI.Horizontally(() =>
             {
-                EGUI.Label("Name:", EGUI.Width(80), EGUI.Height(EGUI.DropDownHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft));
+                EGUI.Label("Name:", EGUI.Size(80, EGUI.DropDownHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft));
                 EGUI.TextField(_configName, EGUI.DropDownHeight02, TextAnchor.MiddleLeft, out controlName, configName =>
                 {
                     _configName = configName;
@@ -104,53 +98,49 @@ namespace Build1.UnityConfig.Editor.Config.States
                     _configAlreadyExists = false;
                 });
             });
-            
+
             EGUI.Horizontally(() =>
             {
-                EGUI.Label("Copy from:", EGUI.Width(80), EGUI.Height(EGUI.DropDownHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft));
-                EGUI.DropDown(configs, ref _configCopyFromIndex, EGUI.DropDownHeight02);    
+                EGUI.Label("Copy from:", EGUI.Size(80, EGUI.DropDownHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft));
+                EGUI.DropDown(configs, ref _configCopyFromIndex, EGUI.DropDownHeight02);
             });
-            
+
             string configSourceName = null;
             if (_configCopyFromIndex < configs.Count - 1)
                 configSourceName = configs[_configCopyFromIndex];
 
             EGUI.Focus(controlName);
-            
+
             EGUI.Horizontally(() =>
             {
                 if (_configNameInvalid)
                 {
                     EGUI.Space(8);
-                    
-                    EGUI.Label("Invalid name. Can't be empty of whitespace. No special symbols or spaces allowed.", 
-                               LabelType.Error, 
-                               EGUI.Height(EGUI.ButtonHeight01), 
-                               EGUI.StretchedWidth(), 
-                               EGUI.TextAnchor(TextAnchor.MiddleCenter));
-                    
+
+                    EGUI.Label("Invalid name. Can't be empty of whitespace. No special symbols or spaces allowed.",
+                               LabelType.Error,
+                               EGUI.Height(EGUI.ButtonHeight01), EGUI.TextAnchor(TextAnchor.MiddleCenter), EGUI.StretchedWidth());
+
                     EGUI.Space(8);
                 }
                 else if (_configAlreadyExists)
                 {
                     EGUI.Space(8);
-                    
-                    EGUI.Label($"Config with name '{_configName}' already exist.", 
-                               LabelType.Error, 
-                               EGUI.Height(EGUI.ButtonHeight01), 
-                               EGUI.StretchedWidth(), 
-                               EGUI.TextAnchor(TextAnchor.MiddleCenter));
-                    
+
+                    EGUI.Label($"Config with name '{_configName}' already exist.",
+                               LabelType.Error,
+                               EGUI.Height(EGUI.ButtonHeight01), EGUI.TextAnchor(TextAnchor.MiddleCenter), EGUI.StretchedWidth());
+
                     EGUI.Space(8);
                 }
                 else
                 {
                     EGUI.Space();
                 }
-                
-                EGUI.Button("Create", out add, 120, EGUI.ButtonHeight01);
+
+                EGUI.Button("Create", EGUI.Size(120, EGUI.ButtonHeight01)).Clicked(out add);
             });
-            
+
             if (!add)
                 return;
 
@@ -161,7 +151,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             _configAlreadyExists = model.CheckConfigExists(_configName);
             if (_configAlreadyExists)
                 return;
-            
+
             model.AddConfig(_configName, configSourceName);
 
             _configName = string.Empty;

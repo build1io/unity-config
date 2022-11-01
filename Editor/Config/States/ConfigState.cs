@@ -30,8 +30,11 @@ namespace Build1.UnityConfig.Editor.Config.States
 
             EGUI.Horizontally(() =>
             {
-                EGUI.Button("Back", out backClicked, EGUI.ButtonHeight01);
-                EGUI.Enabled(model.SelectedConfigCanBeDeleted, () => { EGUI.Button("Delete", out deleteConfig, 130, EGUI.ButtonHeight01); });
+                EGUI.Button("Back", EGUI.Height(EGUI.ButtonHeight01)).Clicked(out backClicked);
+                EGUI.Enabled(model.SelectedConfigCanBeDeleted, () =>
+                {
+                    EGUI.Button("Delete", EGUI.Size(130, EGUI.ButtonHeight01)).Clicked(out deleteConfig);
+                });
             });
 
             EGUI.Space(6);
@@ -51,8 +54,8 @@ namespace Build1.UnityConfig.Editor.Config.States
             EGUI.Horizontally(() =>
             {
                 EGUI.Title(model.SelectedConfigName, TitleType.H3, EGUI.OffsetX(5), EGUI.StretchedWidth(), EGUI.TextAnchor(TextAnchor.MiddleLeft));
-                EGUI.Button("Copy Json", out configCopyClicked, 130, EGUI.ButtonHeight01);
-                EGUI.Button("View Json", out configViewClicked, 130, EGUI.ButtonHeight01);
+                EGUI.Button("Copy Json", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCopyClicked);
+                EGUI.Button("View Json", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configViewClicked);
             });
 
             EGUI.Space(6);
@@ -96,16 +99,19 @@ namespace Build1.UnityConfig.Editor.Config.States
 
                 EGUI.Enabled(canBeSaved && modified, () =>
                 {
-                    EGUI.Button("Save", out sectionSaveClicked, 130, EGUI.DropDownHeight01);
+                    EGUI.Button("Save", EGUI.Size(130, EGUI.DropDownHeight01))
+                        .Clicked(out sectionSaveClicked);
                 });
                 
                 // Firebase config can be edited locally and reverted, but can't be saved.
                 EGUI.Enabled(modified, () =>
                 {
-                    EGUI.Button("Revert", out sectionRevertClicked, 130, EGUI.DropDownHeight01);
+                    EGUI.Button("Revert", EGUI.Size(130, EGUI.DropDownHeight01))
+                        .Clicked(out sectionRevertClicked);
                 });
 
-                EGUI.Button("View Json", out sectionViewClicked, 130, EGUI.DropDownHeight01);
+                EGUI.Button("View Json", EGUI.Size(130, EGUI.DropDownHeight01))
+                    .Clicked(out sectionViewClicked);
             });
 
             if (!canBeSaved)
