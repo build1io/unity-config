@@ -2,7 +2,7 @@
 
 using Build1.UnityConfig.Editor.Config.States;
 using Build1.UnityEGUI;
-using Build1.UnityEGUI.Types;
+using Build1.UnityEGUI.Components.Title;
 using Build1.UnityEGUI.Window;
 using UnityEditor;
 using UnityEngine;
@@ -14,11 +14,6 @@ namespace Build1.UnityConfig.Editor.Config
         private ConfigEditorModel _model;
         private ConfigEditorState _stateDefault;
         private ConfigEditorState _stateConfigView;
-
-        protected override void OnAwake()
-        {
-            Padding = 10;
-        }
 
         protected override void OnInitialize()
         {
@@ -37,7 +32,7 @@ namespace Build1.UnityConfig.Editor.Config
 
         protected override void OnEGUI()
         {
-            EGUI.Title($"{Application.productName} Config", TitleType.H1, 5);
+            EGUI.Title($"{Application.productName} Config", TitleType.H1, EGUI.OffsetX(5));
             EGUI.Space(10);
 
             if (Application.isPlaying)
@@ -61,7 +56,9 @@ namespace Build1.UnityConfig.Editor.Config
 
         public static void Open()
         {
-            EGUIWindow.Open<ConfigEditor>($"{Application.productName} Config", 800, 1000, false, true);
+            EGUI.Window<ConfigEditor>($"{Application.productName} Config", false)
+                .Size(800, 1000)
+                .Get();
         }
     }
 }

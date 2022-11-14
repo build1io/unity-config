@@ -2,8 +2,8 @@
 
 using System;
 using Build1.UnityEGUI;
+using Build1.UnityEGUI.Components.Title;
 using Build1.UnityEGUI.Json;
-using Build1.UnityEGUI.Types;
 using Build1.UnityEGUI.Window;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -12,66 +12,85 @@ namespace Build1.UnityConfig.Editor.Json
 {
     internal sealed class JsonViewer : EGUIWindow
     {
-        private string Title { get; set; }
-        private string Json  { get; set; }
+        // For debugging.
+        // Json = "{" +
+        //        "\"support_email\":\"email@gmail.com\"," +
+        //        "\"support_email_subject\":\"Support Request #{0}\"," +
+        //        "\"support_email_body\":\"Hey developers,\n\n\"," +
+        //        "\"privacy_policy_url\":\"https://google.com\"," +
+        //        "\"terms_of_use_url\":\"https://google.com\"," +
+        //        "\"collection\":[0,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6]," +
+        //        "\"multiple_children\":" +
+        //        "{" +
+        //        "\"name\":\"value\"," +
+        //        "\"int\":10" +
+        //        "}" +
+        //        "}";
+
+        private string _title;
+        private string _json;
 
         [SerializeField] private TreeViewState _jsonTreeViewState;
         [NonSerialized]  private JsonTreeView  _jsonTree;
 
-        protected override void OnAwake()
-        {
-            Padding = 10;
-            FocusLost += Close;
+        /*
+         * Public.
+         */
 
-            // For debugging.
-            // Json = "{" +
-            //        "\"support_email\":\"email@gmail.com\"," +
-            //        "\"support_email_subject\":\"Support Request #{0}\"," +
-            //        "\"support_email_body\":\"Hey developers,\n\n\"," +
-            //        "\"privacy_policy_url\":\"https://google.com\"," +
-            //        "\"terms_of_use_url\":\"https://google.com\"," +
-            //        "\"collection\":[0,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6]," +
-            //        "\"multiple_children\":" +
-            //        "{" +
-            //        "\"name\":\"value\"," +
-            //        "\"int\":10" +
-            //        "}" +
-            //        "}";
+        public JsonViewer Title(string title)
+        {
+            _title = title;
+            return this;
         }
+
+        public JsonViewer Json(string json)
+        {
+            _json = json;
+            return this;
+        }
+
+        /*
+         * Protected.
+         */
 
         protected override void OnInitialize()
         {
             _jsonTreeViewState ??= new TreeViewState();
-            _jsonTree ??= new JsonTreeView(Json, _jsonTreeViewState);
+            _jsonTree ??= new JsonTreeView(_json, _jsonTreeViewState);
+        }
+
+        protected override void OnFocusLost()
+        {
+            Close();
         }
 
         protected override void OnEGUI()
         {
             EGUI.Horizontally(() =>
             {
-                EGUI.Title(Title ?? "Json Viewer", TitleType.H3);
+                EGUI.Title(_title ?? "Json Viewer", TitleType.H3);
                 EGUI.Space();
-                EGUI.Label("* click anywhere outside to close", FontStyle.Italic);
+                EGUI.Label("* click anywhere outside to close", EGUI.FontStyle(FontStyle.Italic));
             });
             EGUI.Space(5);
 
             var titleRect = EGUI.GetLastRect();
 
             EGUI.Space();
-            EGUI.Title("Json:", TitleType.H3, 5);
+            EGUI.Title("Json:", TitleType.H3, EGUI.OffsetX(5));
             EGUI.Space(3);
 
             var jsonRect = EGUI.GetLastRect();
 
-            EGUI.TextArea(Json.Replace("\n", ""), 150);
+            EGUI.TextArea(_json.Replace("\n", ""), 150);
             EGUI.Space(1);
             EGUI.Horizontally(() =>
             {
-                EGUI.Button("Expand All", 120, EGUI.ButtonHeight01, _jsonTree.ExpandAll);
-                EGUI.Button("Collapse All", 120, EGUI.ButtonHeight01, _jsonTree.CollapseAll);
+                EGUI.Button("Expand All", EGUI.Size(120, EGUI.ButtonHeight01)).OnClick(_jsonTree.ExpandAll);
+                EGUI.Button("Collapse All", EGUI.Size(120, EGUI.ButtonHeight01)).OnClick(_jsonTree.CollapseAll);
                 EGUI.Space();
-                EGUI.Button("Copy to Clipboard", 200, EGUI.ButtonHeight01, EGUI.CopyToClipboard, Json);
-                EGUI.Button("Close", 100, EGUI.ButtonHeight01, Close);
+                EGUI.Button("Copy to Clipboard", EGUI.Size(200, EGUI.ButtonHeight01)).OnClick(EGUI.CopyToClipboard, _json);
+                EGUI.Button("Close", EGUI.Size(100, EGUI.ButtonHeight01)).OnClick(Close);
             });
 
             const int x = 0;
@@ -88,9 +107,11 @@ namespace Build1.UnityConfig.Editor.Json
 
         public static void Open(string title, string json)
         {
-            var window = EGUIWindow.Open<JsonViewer>("Json Viewer", 800, 900, true, true);
-            window.Title = title;
-            window.Json = json;
+            EGUI.Window<JsonViewer>("Json Viewer", true)
+                .Size(800, 900)
+                .Get()
+                .Title(title)
+                .Json(json);
         }
     }
 }
