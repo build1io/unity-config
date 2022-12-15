@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Build1.UnityConfig.Editor.Processors;
-using Build1.UnityConfig.Repositories.Firebase;
+using Build1.UnityConfig.Repositories;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -201,14 +201,8 @@ namespace Build1.UnityConfig.Editor.Config
 
         private static void LoadFirebaseConfig(Action<ConfigNode> onComplete, Action<Exception> onError)
         {
-            var loader = new FirebaseRemoteConfigLoader();
-            loader.onComplete += json =>
-            {
-                var config = (ConfigNode)JsonConvert.DeserializeObject(json, UnityConfig.Instance.ConfigType);
-                onComplete?.Invoke(config);
-            };
-            loader.onError += exception => { onError?.Invoke(exception); };
-            loader.Load();
+            var repository = (IConfigRepository)Activator.CreateInstance(UnityConfig.FirebaseRepositoryType);
+            repository.Load(onComplete, onError);
         }
 
         private static void LoadLocalConfig(string configName, Action<ConfigNode> onComplete, Action<Exception> onError)

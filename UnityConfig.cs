@@ -15,8 +15,9 @@ namespace Build1.UnityConfig
     public sealed class UnityConfig
     {
         #if UNITY_EDITOR
-        
-        internal static UnityConfig Instance { get; private set; }
+
+        internal static UnityConfig Instance               { get; private set; }
+        internal static Type        FirebaseRepositoryType { get; private set; }
 
         public static event Action OnConfigSourceChanged;
 
@@ -27,7 +28,7 @@ namespace Build1.UnityConfig
         {
             ConfigProcessor.OnConfigSourceChanged += () => OnConfigSourceChanged?.Invoke();
         }
-        
+
         private UnityConfig(Type configType)
         {
             ConfigType = configType;
@@ -58,7 +59,13 @@ namespace Build1.UnityConfig
             Instance = new UnityConfig(typeof(T));
             return Instance;
         }
-        
+
+        public UnityConfig RegisterFirebaseRepository<T>() where T : IConfigRepository
+        {
+            FirebaseRepositoryType = typeof(T);
+            return this;
+        }
+
         /*
          * Editors.
          */
@@ -73,14 +80,15 @@ namespace Build1.UnityConfig
 
         public static void OpenJsonViewer(string json)               { JsonViewer.Open(null, json); }
         public static void OpenJsonViewer(string title, string json) { JsonViewer.Open(title, json); }
-        
+
         #endif
-        
+
         /*
          * Loading.
          */
-        
-        public static void LoadConfig<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
+
+        public static void LoadConfig<T, R>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
+                                                                                             where R : IConfigRepository
         {
             #if UNITY_EDITOR
 
@@ -89,23 +97,29 @@ namespace Build1.UnityConfig
                 LoadConfigEditor(onComplete, onError);
                 return;
             }
-                
+
             #endif
-            
-            LoadConfigEditorRuntime(onComplete, onError);
+
+            LoadConfigEditorRuntime<T, R>(onComplete, onError);
         }
 
-        private static void LoadConfigEditorRuntime<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
+        private static void LoadConfigEditorRuntime<T, R>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
+                                                                                                           where R : IConfigRepository
         {
             var configSource = ConfigSource.Get();
             if (configSource == ConfigSource.Firebase)
-                ConfigRepositoryFirebase<T>.Load(onComplete, onError);
+            {
+                var firebaseRepository = (IConfigRepository)Activator.CreateInstance<R>();
+                firebaseRepository.Load(onComplete, onError);
+            }
             else
+            {
                 ConfigRepositoryLocal<T>.Load(onComplete, onError);
+            }
         }
 
         #if UNITY_EDITOR
-        
+
         private static void LoadConfigEditor<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
         {
             if (Instance == null)
@@ -116,16 +130,13 @@ namespace Build1.UnityConfig
                 throw new Exception($"Specified type is not the config source type. [{Instance.ConfigType.FullName}]");
 
             var configSource = ConfigSource.Get();
-            ConfigEditorModel.LoadConfig(configSource, node =>
-            {
-                onComplete?.Invoke((T)node);
-            }, exception =>
+            ConfigEditorModel.LoadConfig(configSource, node => { onComplete?.Invoke((T)node); }, exception =>
             {
                 Debug.LogError(exception);
                 onError?.Invoke(exception);
             });
         }
-        
+
         #endif
     }
 }
