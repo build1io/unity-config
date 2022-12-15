@@ -86,6 +86,21 @@ namespace Build1.UnityConfig
         /*
          * Loading.
          */
+        
+        public static void LoadConfig<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
+        {
+            #if UNITY_EDITOR
+
+            if (!Application.isPlaying)
+            {
+                LoadConfigEditor(onComplete, onError);
+                return;
+            }
+
+            #endif
+
+            LoadConfigEditorRuntime<T>(onComplete, onError);
+        }
 
         public static void LoadConfig<T, R>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
                                                                                              where R : IConfigRepository
@@ -116,6 +131,11 @@ namespace Build1.UnityConfig
             {
                 ConfigRepositoryLocal<T>.Load(onComplete, onError);
             }
+        }
+        
+        private static void LoadConfigEditorRuntime<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
+        {
+            ConfigRepositoryLocal<T>.Load(onComplete, onError);
         }
 
         #if UNITY_EDITOR
