@@ -17,9 +17,9 @@ namespace Build1.UnityConfig.Editor.Processors
         private static readonly string configSourceResetFilePath  = Application.dataPath + "/Config/config-source-reset.txt";
         private static readonly string configEmbedDefaultFilePath = Application.dataPath + "/Config/config-embed-default.txt";
 
-        public static event Action OnConfigSourceChanged;
-        public static event Action OnConfigSaving;
-        public static event Action OnConfigSaved;
+        public static event Action             OnConfigSourceChanged;
+        public static event Action<ConfigNode> OnConfigSaving;
+        public static event Action<ConfigNode> OnConfigSaved;
 
         static ConfigProcessor()
         {
@@ -194,8 +194,8 @@ namespace Build1.UnityConfig.Editor.Processors
             AssetDatabase.Refresh(ImportAssetOptions.Default);
         }
 
-        public static void OnSaving() { OnConfigSaving?.Invoke(); }
-        public static void OnSaved()  { OnConfigSaved?.Invoke(); }
+        public static void OnSaving(ConfigNode config) { OnConfigSaving?.Invoke(config); }
+        public static void OnSaved(ConfigNode config)  { OnConfigSaved?.Invoke(config); }
 
         /*
          * Paths.

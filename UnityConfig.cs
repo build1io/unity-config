@@ -19,9 +19,9 @@ namespace Build1.UnityConfig
         internal static UnityConfig Instance               { get; private set; }
         internal static Type        FirebaseRepositoryType { get; private set; }
 
-        public static event Action OnConfigSourceChanged;
-        public static event Action OnConfigSaving;
-        public static event Action OnConfigSaved;
+        public static event Action             OnConfigSourceChanged;
+        public static event Action<ConfigNode> OnConfigSaving;
+        public static event Action<ConfigNode> OnConfigSaved;
 
         internal Type                                    ConfigType { get; }
         internal Dictionary<string, ConfigSectionEditor> Sections   { get; private set; }
@@ -29,8 +29,8 @@ namespace Build1.UnityConfig
         static UnityConfig()
         {
             ConfigProcessor.OnConfigSourceChanged += () => OnConfigSourceChanged?.Invoke();
-            ConfigProcessor.OnConfigSaving += () => OnConfigSaving?.Invoke();
-            ConfigProcessor.OnConfigSaved += () => OnConfigSaved?.Invoke();
+            ConfigProcessor.OnConfigSaving += c => OnConfigSaving?.Invoke(c);
+            ConfigProcessor.OnConfigSaved += c => OnConfigSaved?.Invoke(c);
         }
 
         private UnityConfig(Type configType)

@@ -252,7 +252,7 @@ namespace Build1.UnityConfig.Editor.Config
                 return;
             }
 
-            ConfigProcessor.OnSaving();
+            ConfigProcessor.OnSaving(config);
 
             property.SetValue(config, SelectedConfigSection);
 
@@ -264,7 +264,7 @@ namespace Build1.UnityConfig.Editor.Config
             
             OnSectionSaved?.Invoke();
             
-            ConfigProcessor.OnSaved();
+            ConfigProcessor.OnSaved(config);
         }
 
         public void RevertSection()
