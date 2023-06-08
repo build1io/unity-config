@@ -18,6 +18,8 @@ namespace Build1.UnityConfig.Editor.Processors
         private static readonly string configEmbedDefaultFilePath = Application.dataPath + "/Config/config-embed-default.txt";
 
         public static event Action OnConfigSourceChanged;
+        public static event Action OnConfigSaving;
+        public static event Action OnConfigSaved;
 
         static ConfigProcessor()
         {
@@ -120,7 +122,7 @@ namespace Build1.UnityConfig.Editor.Processors
             var text = File.ReadAllText(configEmbedDefaultFilePath);
             return !bool.TryParse(text, out var enabled) || enabled;
         }
-        
+
         public static void SetEmbedDefaultEnabled(bool value)
         {
             File.WriteAllText(configEmbedDefaultFilePath, value.ToString());
@@ -191,6 +193,9 @@ namespace Build1.UnityConfig.Editor.Processors
 
             AssetDatabase.Refresh(ImportAssetOptions.Default);
         }
+
+        public static void OnSaving() { OnConfigSaving?.Invoke(); }
+        public static void OnSaved()  { OnConfigSaved?.Invoke(); }
 
         /*
          * Paths.

@@ -252,6 +252,8 @@ namespace Build1.UnityConfig.Editor.Config
                 return;
             }
 
+            ConfigProcessor.OnSaving();
+
             property.SetValue(config, SelectedConfigSection);
 
             SelectedConfigSectionBackup = CloneSection(SelectedConfigSection);
@@ -261,6 +263,8 @@ namespace Build1.UnityConfig.Editor.Config
             InProgress = false;
             
             OnSectionSaved?.Invoke();
+            
+            ConfigProcessor.OnSaved();
         }
 
         public void RevertSection()

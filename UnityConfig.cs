@@ -20,6 +20,8 @@ namespace Build1.UnityConfig
         internal static Type        FirebaseRepositoryType { get; private set; }
 
         public static event Action OnConfigSourceChanged;
+        public static event Action OnConfigSaving;
+        public static event Action OnConfigSaved;
 
         internal Type                                    ConfigType { get; }
         internal Dictionary<string, ConfigSectionEditor> Sections   { get; private set; }
@@ -27,6 +29,8 @@ namespace Build1.UnityConfig
         static UnityConfig()
         {
             ConfigProcessor.OnConfigSourceChanged += () => OnConfigSourceChanged?.Invoke();
+            ConfigProcessor.OnConfigSaving += () => OnConfigSaving?.Invoke();
+            ConfigProcessor.OnConfigSaved += () => OnConfigSaved?.Invoke();
         }
 
         private UnityConfig(Type configType)
@@ -86,7 +90,7 @@ namespace Build1.UnityConfig
         /*
          * Loading.
          */
-        
+
         public static void LoadConfig<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
         {
             #if UNITY_EDITOR
@@ -132,7 +136,7 @@ namespace Build1.UnityConfig
                 ConfigRepositoryLocal<T>.Load(onComplete, onError);
             }
         }
-        
+
         private static void LoadConfigEditorRuntime<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
         {
             ConfigRepositoryLocal<T>.Load(onComplete, onError);
