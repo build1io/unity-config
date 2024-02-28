@@ -66,6 +66,8 @@ namespace Build1.UnityConfig.Editor.Json
 
         protected override void OnEGUI()
         {
+            var json = _json.Replace("\n", "");
+
             EGUI.Horizontally(() =>
             {
                 EGUI.Title(_title ?? "Json Viewer", TitleType.H3);
@@ -77,12 +79,20 @@ namespace Build1.UnityConfig.Editor.Json
             var titleRect = EGUI.GetLastRect();
 
             EGUI.Space();
-            EGUI.Title("Json:", TitleType.H3, EGUI.OffsetX(5));
+
+            EGUI.Horizontally(() =>
+            {
+                EGUI.Title("Json:", TitleType.H3, EGUI.OffsetX(5));
+                EGUI.Space();
+                EGUI.Label("Symbols: ", EGUI.FontStyle(FontStyle.Bold));
+                EGUI.Label($"{json.Length}");
+            });
+
             EGUI.Space(3);
 
             var jsonRect = EGUI.GetLastRect();
 
-            EGUI.TextArea(_json.Replace("\n", ""), 150);
+            EGUI.TextArea(_json, 150);
             EGUI.Space(1);
             EGUI.Horizontally(() =>
             {
