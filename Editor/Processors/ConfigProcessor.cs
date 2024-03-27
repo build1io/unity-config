@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,12 +13,16 @@ namespace Build1.UnityConfig.Editor.Processors
     [InitializeOnLoad]
     internal static class ConfigProcessor
     {
-        private static readonly string configSourceFilePath       = Application.dataPath + "/Resources/" + ConfigSource.FileName + ".txt";
-        private static readonly string resourcesFolderPath        = Application.dataPath + "/Resources/";
-        private static readonly string configSourceResetFilePath  = Application.dataPath + "/Config/config-source-reset.txt";
-        private static readonly string configEmbedDefaultFilePath = Application.dataPath + "/Config/config-embed-default.txt";
+        private static readonly JsonSerializerSettings JsonSerializerSettings = new()
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore
+        };
+        
+        private static readonly string editorSettingsFilePath = Application.dataPath + "/Build1/build1-config.json";
+        private static readonly string clientSettingsFilePath = Application.dataPath + "/Resources/build1-config-settings.json";
+        private static readonly string resourcesFolderPath    = Application.dataPath + "/Resources/";
 
-        public static event Action             OnConfigSourceChanged;
         public static event Action<ConfigNode> OnConfigSaving;
         public static event Action<ConfigNode> OnConfigSaved;
 
@@ -33,7 +38,6 @@ namespace Build1.UnityConfig.Editor.Processors
         public static void CheckRequiredResources()
         {
             CheckConfigFolder();
-            CheckConfigSourceFile();
         }
 
         private static void CheckConfigFolder()
@@ -42,41 +46,43 @@ namespace Build1.UnityConfig.Editor.Processors
             if (Directory.Exists(configsRootPath))
                 return;
 
-            Log("Configs folder not found. Creating...");
             Directory.CreateDirectory(configsRootPath);
-            SetResetConfigSourceForReleaseBuilds(true);
-            Log("Done");
-        }
-
-        private static void CheckConfigSourceFile()
-        {
-            if (File.Exists(configSourceFilePath))
-            {
-                var configSource = GetConfigSource();
-                var configs = GetConfigs();
-                if (configs.Contains(configSource))
-                    return;
-            }
-
-            Log("Config file not found. Creating...");
-            Log($"Path: {configSourceFilePath}");
-            SetConfigSource(ConfigSource.Default);
-            Log("Done.");
+            Log("Configs folder created");
         }
 
         /*
-         * Config Source.
+         * Settings.
          */
 
-        public static string GetConfigSource()
+        public static ConfigSettingsEditor GetSettings()
         {
-            return ConfigSource.Get();
+            if (!File.Exists(editorSettingsFilePath))
+                return ConfigSettingsEditor.New(ConfigSettings.SourceDefault);
+
+            var json = File.ReadAllText(editorSettingsFilePath);
+            var settings = JsonConvert.DeserializeObject<ConfigSettingsEditor>(json);
+            return settings;
         }
 
-        public static void SetConfigSource(string source)
+        public static void TrySaveSettings(ConfigSettingsEditor settings)
         {
-            File.WriteAllText(configSourceFilePath, source);
+            if (!settings.IsDirty)
+                return;
+            
+            var json = JsonConvert.SerializeObject(settings, JsonSerializerSettings);
+            File.WriteAllText(editorSettingsFilePath, json);
 
+            var clientSettings = ConfigSettings.FromEditorSettings(settings);
+            json = JsonConvert.SerializeObject(clientSettings, JsonSerializerSettings);
+            File.WriteAllText(clientSettingsFilePath, json);
+            
+            UpdateConfigFiles(settings);
+            
+            settings.ResetDirty();
+        }
+
+        private static void UpdateConfigFiles(ConfigSettingsEditor settings)
+        {
             var configResourcePath = resourcesFolderPath + "config.json";
             if (File.Exists(configResourcePath))
                 File.Delete(configResourcePath);
@@ -84,52 +90,12 @@ namespace Build1.UnityConfig.Editor.Processors
             var configResourcePathMeta = resourcesFolderPath + "config.json.meta";
             if (File.Exists(configResourcePathMeta))
                 File.Delete(configResourcePathMeta);
-
+                
             // Firebase is remote, so we don't need to embed anything into the build.
-            if (source != ConfigSource.Firebase)
-                File.Copy(GetEditorConfigFilePath(source), configResourcePath);
+            if (settings.Source != ConfigSettings.SourceFirebase)
+                File.Copy(GetEditorConfigFilePath(settings.Source), configResourcePath);
 
             AssetDatabase.Refresh(ImportAssetOptions.Default);
-
-            Log($"Config Source set to {source}");
-
-            OnConfigSourceChanged?.Invoke();
-        }
-
-        public static bool GetConfigSourceResetEnabled()
-        {
-            if (!File.Exists(configSourceResetFilePath))
-                return true;
-
-            var text = File.ReadAllText(configSourceResetFilePath);
-            return !bool.TryParse(text, out var enabled) || enabled;
-        }
-
-        public static void SetResetConfigSourceForReleaseBuilds(bool value)
-        {
-            File.WriteAllText(configSourceResetFilePath, value.ToString());
-
-            Log(value
-                    ? "Config Source reset for release builds enabled."
-                    : "Config Source reset for release builds disabled.");
-        }
-
-        public static bool GetEmbedDefaultEnabled()
-        {
-            if (!File.Exists(configEmbedDefaultFilePath))
-                return true;
-
-            var text = File.ReadAllText(configEmbedDefaultFilePath);
-            return !bool.TryParse(text, out var enabled) || enabled;
-        }
-
-        public static void SetEmbedDefaultEnabled(bool value)
-        {
-            File.WriteAllText(configEmbedDefaultFilePath, value.ToString());
-
-            Log(value
-                    ? "Default config embedding enabled."
-                    : "Default config embedding disabled.");
         }
 
         /*
@@ -140,7 +106,7 @@ namespace Build1.UnityConfig.Editor.Processors
         {
             var configsRootPath = GetEditorConfigsRootFolderPath();
             var directories = Directory.GetDirectories(configsRootPath);
-            var res = new List<string> { ConfigSource.Firebase };
+            var res = new List<string> { ConfigSettings.SourceFirebase };
             res.AddRange(directories.Select(directory => directory.Replace(configsRootPath, "")));
             return res;
         }
@@ -160,7 +126,7 @@ namespace Build1.UnityConfig.Editor.Processors
 
         public static void RemoveConfig(string configName, Action<string> onComplete, Action<Exception> onError)
         {
-            if (configName == ConfigSource.Firebase)
+            if (configName == ConfigSettings.SourceFirebase)
             {
                 onError?.Invoke(new Exception("Firebase config can't be deleted."));
                 return;
@@ -170,11 +136,14 @@ namespace Build1.UnityConfig.Editor.Processors
             Directory.Delete(folderPath, true);
             File.Delete(folderPath + ".meta");
 
-            var source = GetConfigSource();
+            var settings = GetSettings();
+            var source = settings.Source;
             if (source == configName)
             {
                 File.Delete(resourcesFolderPath + "config.json");
-                SetConfigSource(ConfigSource.Default);
+                
+                settings.SetSource(ConfigSettings.SourceDefault);
+                TrySaveSettings(settings);
             }
 
             AssetDatabase.Refresh(ImportAssetOptions.Default);
@@ -187,8 +156,8 @@ namespace Build1.UnityConfig.Editor.Processors
             var filePath = GetEditorConfigFilePath(configName);
             File.WriteAllText(filePath, content);
 
-            var source = GetConfigSource();
-            if (source == configName && source != ConfigSource.Firebase)
+            var source = GetSettings().Source;
+            if (source == configName && source != ConfigSettings.SourceFirebase)
                 File.WriteAllText(resourcesFolderPath + "config.json", content);
 
             AssetDatabase.Refresh(ImportAssetOptions.Default);

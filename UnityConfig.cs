@@ -19,7 +19,6 @@ namespace Build1.UnityConfig
         internal static UnityConfig Instance               { get; private set; }
         internal static Type        FirebaseRepositoryType { get; private set; }
 
-        public static event Action             OnConfigSourceChanged;
         public static event Action<ConfigNode> OnConfigSaving;
         public static event Action<ConfigNode> OnConfigSaved;
 
@@ -28,7 +27,6 @@ namespace Build1.UnityConfig
 
         static UnityConfig()
         {
-            ConfigProcessor.OnConfigSourceChanged += () => OnConfigSourceChanged?.Invoke();
             ConfigProcessor.OnConfigSaving += c => OnConfigSaving?.Invoke(c);
             ConfigProcessor.OnConfigSaved += c => OnConfigSaved?.Invoke(c);
         }
@@ -125,8 +123,9 @@ namespace Build1.UnityConfig
         private static void LoadConfigEditorRuntime<T, R>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
                                                                                                            where R : IConfigRepository
         {
-            var configSource = ConfigSource.Get();
-            if (configSource == ConfigSource.Firebase)
+            var settings = ConfigSettings.Get();
+            var configSource = settings.Source;
+            if (configSource == ConfigSettings.SourceFirebase)
             {
                 var firebaseRepository = (IConfigRepository)Activator.CreateInstance<R>();
                 firebaseRepository.Load(onComplete, onError);
@@ -153,7 +152,9 @@ namespace Build1.UnityConfig
             if (type != Instance.ConfigType)
                 throw new Exception($"Specified type is not the config source type. [{Instance.ConfigType.FullName}]");
 
-            var configSource = ConfigSource.Get();
+            var settings = ConfigSettings.Get();
+            var configSource = settings.Source;
+
             ConfigEditorModel.LoadConfig(configSource, node => { onComplete?.Invoke((T)node); }, exception =>
             {
                 Debug.LogError(exception);

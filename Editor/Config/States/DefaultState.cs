@@ -15,9 +15,9 @@ namespace Build1.UnityConfig.Editor.Config.States
         private static int     _selectedConfigIndex = -1;
 
         private static string _configName          = string.Empty;
-        private static int    _configCopyFromIndex = 0;
-        private static bool   _configNameInvalid   = false;
-        private static bool   _configAlreadyExists = false;
+        private static int    _configCopyFromIndex;
+        private static bool   _configNameInvalid;
+        private static bool   _configAlreadyExists;
 
         public DefaultState(ConfigEditorModel model) : base(model)
         {
@@ -26,7 +26,9 @@ namespace Build1.UnityConfig.Editor.Config.States
         public override void Draw()
         {
             var configs = model.Configs;
-            var currentConfigSourceIndex = configs.IndexOf(model.ConfigSource);
+            var settings = model.Settings;
+            
+            var currentConfigSourceIndex = configs.IndexOf(model.Settings.Source);
 
             EGUI.Scroll(ref _scrollPosition, () =>
             {
@@ -36,16 +38,24 @@ namespace Build1.UnityConfig.Editor.Config.States
                 EGUI.Label("Selected config (any except Firebase) will be included and used in the build.\nFirebase will make app load config from Firebase remote.");
                 EGUI.Space(3);
 
-                EGUI.DropDown(configs, currentConfigSourceIndex, EGUI.DropDownHeight01, newIndex => { model.SetConfigSource(configs[newIndex]); });
+                EGUI.DropDown(configs, currentConfigSourceIndex, EGUI.DropDownHeight01, newIndex =>
+                {
+                    settings.SetSource(configs[newIndex]);
+                });
                 EGUI.Space(18);
 
-                EGUI.Checkbox("Reset to Firebase in Release builds", model.ConfigSourceResetEnabled, resetSelected => { model.SetConfigSourceResetEnabled(resetSelected); });
+                EGUI.Checkbox("Reset to Firebase for Platform builds", settings.ResetSourceForPlatformBuilds, resetSelected =>
+                {
+                    settings.SetResetForPlatformBuilds(resetSelected);
+                });
 
-                // EGUI.Space(5);
-                // EGUI.Checkbox("Embed copy of Firebase config", model.ConfigEmbedDefaultEnabled, embedSelected =>
-                // {
-                //     model.SetEmbedDefaultEnabled(embedSelected);
-                // });
+                EGUI.Space(5);
+                EGUI.Checkbox("Fallback enabled", settings.FallbackEnabled, value =>
+                {
+                    settings.SetFallbackEnabled(value);
+                });
+                
+                model.TrySaveSettings();
 
                 EGUI.Space(40);
 

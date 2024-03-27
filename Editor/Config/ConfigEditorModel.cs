@@ -15,17 +15,15 @@ namespace Build1.UnityConfig.Editor.Config
 {
     internal sealed class ConfigEditorModel
     {
-        public string ConfigSource              { get; private set; }
-        public bool   ConfigSourceResetEnabled  { get; private set; }
-        public bool   ConfigEmbedDefaultEnabled { get; private set; }
+        public ConfigSettingsEditor Settings { get; private set; }
 
         public List<string> Configs        { get; private set; }
         public bool         ConfigSelected => SelectedConfig != null;
 
         public string     SelectedConfigName         { get; private set; }
         public ConfigNode SelectedConfig             { get; private set; }
-        public bool       SelectedConfigCanBeSaved   => SelectedConfigName != Build1.UnityConfig.ConfigSource.Firebase;
-        public bool       SelectedConfigCanBeDeleted => SelectedConfigName != Build1.UnityConfig.ConfigSource.Firebase;
+        public bool       SelectedConfigCanBeSaved   => SelectedConfigName != ConfigSettings.SourceFirebase;
+        public bool       SelectedConfigCanBeDeleted => SelectedConfigName != ConfigSettings.SourceFirebase;
 
         public List<string> SelectedConfigSections      { get; private set; }
         public ConfigNode   SelectedConfigSection       { get; private set; }
@@ -43,22 +41,18 @@ namespace Build1.UnityConfig.Editor.Config
 
         public ConfigEditorModel()
         {
-            ConfigAssetsPostProcessor.onAssetsPostProcessed += OnAssetsPostProcessed;
+            ConfigAssetsPostProcessor.onAssetsPostProcessed += () =>
+            {
+                if (!InProgress)
+                    Reset();    
+            };
+            
             Reset();
-        }
-
-        private void OnAssetsPostProcessed()
-        {
-            if (!InProgress)
-                Reset();
         }
 
         public void Reset()
         {
-            ConfigSource = ConfigProcessor.GetConfigSource();
-            ConfigSourceResetEnabled = ConfigProcessor.GetConfigSourceResetEnabled();
-            ConfigEmbedDefaultEnabled = ConfigProcessor.GetEmbedDefaultEnabled();
-
+            Settings = ConfigProcessor.GetSettings();
             Configs = ConfigProcessor.GetConfigs();
 
             SelectedConfigName = null;
@@ -69,30 +63,17 @@ namespace Build1.UnityConfig.Editor.Config
             SelectedConfigSectionBackup = null;
             SelectedConfigSectionName = null;
             SelectedConfigSectionIndex = -1;
-            
+
             OnReset?.Invoke();
         }
 
         /*
-         * Config Source.
+         * Settings.
          */
 
-        public void SetConfigSource(string source)
+        public void TrySaveSettings()
         {
-            ConfigProcessor.SetConfigSource(source);
-            ConfigSource = source;
-        }
-
-        public void SetConfigSourceResetEnabled(bool value)
-        {
-            ConfigProcessor.SetResetConfigSourceForReleaseBuilds(value);
-            ConfigSourceResetEnabled = value;
-        }
-
-        public void SetEmbedDefaultEnabled(bool value)
-        {
-            ConfigProcessor.SetEmbedDefaultEnabled(value);
-            ConfigEmbedDefaultEnabled = value;
+            ConfigProcessor.TrySaveSettings(Settings);
         }
 
         /*
@@ -193,7 +174,7 @@ namespace Build1.UnityConfig.Editor.Config
         internal static void LoadConfig(string configName, Action<ConfigNode> onComplete, Action<Exception> onError)
         {
             // Firebase.
-            if (configName == Build1.UnityConfig.ConfigSource.Firebase)
+            if (configName == Build1.UnityConfig.ConfigSettings.SourceFirebase)
                 LoadFirebaseConfig(onComplete, onError);
             else
                 LoadLocalConfig(configName, onComplete, onError);
@@ -235,7 +216,7 @@ namespace Build1.UnityConfig.Editor.Config
             SelectedConfigSectionIndex = index;
 
             SaveLastSelectedSection(sectionName);
-            
+
             OnSectionChanged?.Invoke();
         }
 
@@ -261,16 +242,16 @@ namespace Build1.UnityConfig.Editor.Config
             ConfigProcessor.SaveConfig(SelectedConfigName, config.ToJson(true));
 
             InProgress = false;
-            
+
             OnSectionSaved?.Invoke();
-            
+
             ConfigProcessor.OnSaved(config);
         }
 
         public void RevertSection()
         {
             SelectedConfigSection = CloneSection(SelectedConfigSectionBackup);
-            
+
             OnSectionReverted?.Invoke();
         }
 
