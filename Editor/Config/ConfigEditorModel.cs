@@ -188,6 +188,7 @@ namespace Build1.UnityConfig.Editor.Config
                 
             #else
                 
+            Debug.LogError("Remote Config loading from Firebase is unavailable. Probably you need to add Firebase Remote Config package into the project.");
             onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
                 
             #endif
