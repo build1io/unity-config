@@ -84,7 +84,7 @@ namespace Build1.UnityConfig.Editor.Config
         {
             InProgress = true;
 
-            LoadConfig(configName, config =>
+            LoadConfig(configName, UnityConfig.Instance.ConfigType, config =>
             {
                 SelectedConfig = config;
                 SelectedConfigName = configName;
@@ -125,7 +125,7 @@ namespace Build1.UnityConfig.Editor.Config
                 return;
             }
 
-            LoadConfig(sourceConfigName, config =>
+            LoadConfig(sourceConfigName, UnityConfig.Instance.ConfigType, config =>
             {
                 var json = config.ToJson(true);
                 ConfigProcessor.AddConfig(name, json, OnConfigAdded);
@@ -171,22 +171,29 @@ namespace Build1.UnityConfig.Editor.Config
          * Config Loading.
          */
 
-        internal static void LoadConfig(string configName, Action<ConfigNode> onComplete, Action<Exception> onError)
+        internal static void LoadConfig(string configName, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
             // Firebase.
-            if (configName == Build1.UnityConfig.ConfigSettings.SourceFirebase)
-                LoadFirebaseConfig(onComplete, onError);
+            if (configName == ConfigSettings.SourceFirebase)
+                LoadFirebaseConfig(configType, onComplete, onError);
             else
                 LoadLocalConfig(configName, onComplete, onError);
         }
 
-        private static void LoadFirebaseConfig(Action<ConfigNode> onComplete, Action<Exception> onError)
+        private static void LoadFirebaseConfig(Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
-            var repository = (IConfigRepository)Activator.CreateInstance(UnityConfig.FirebaseRepositoryType);
-            repository.Load(onComplete, onError);
+            #if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE
+
+            ConfigRepositoryFirebase.Load(null, configType, onComplete, onError);
+                
+            #else
+                
+            onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
+                
+            #endif
         }
 
-        private static void LoadLocalConfig(string configName, Action<ConfigNode> onComplete, Action<Exception> onError)
+        private static void LoadLocalConfig(string configName, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
             try
             {
@@ -197,7 +204,7 @@ namespace Build1.UnityConfig.Editor.Config
             }
             catch (Exception exception)
             {
-                onError?.Invoke(exception);
+                onError?.Invoke(ConfigException.FromException(exception));
             }
         }
 

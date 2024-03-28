@@ -11,6 +11,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.google.firebase.remote-config",
+            "expression": "0",
+            "define": "BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE"
+        }
+    ],
     "noEngineReferences": false
 }

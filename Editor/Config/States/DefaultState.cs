@@ -88,7 +88,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                     });
                     EGUI.Space(18);
 
-                    EGUI.Label("Timeout (Sec)", EGUI.FontStyle(FontStyle.Bold));
+                    EGUI.Label("Timeout (Ms)", EGUI.FontStyle(FontStyle.Bold));
                     EGUI.Int(settings.FallbackTimeout).OnChange(timeout =>
                     {
                         settings.SetFallbackTimeout(timeout);

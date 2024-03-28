@@ -16,8 +16,9 @@ namespace Build1.UnityConfig
     {
         #if UNITY_EDITOR
 
-        internal static UnityConfig Instance               { get; private set; }
-        internal static Type        FirebaseRepositoryType { get; private set; }
+        internal static UnityConfig Instance { get; private set; }
+
+        public static bool FallbackUsed { get; private set; }
 
         public static event Action<ConfigNode> OnConfigSaving;
         public static event Action<ConfigNode> OnConfigSaved;
@@ -62,17 +63,11 @@ namespace Build1.UnityConfig
             return Instance;
         }
 
-        public UnityConfig RegisterFirebaseRepository<T>() where T : IConfigRepository
-        {
-            FirebaseRepositoryType = typeof(T);
-            return this;
-        }
-
         /*
          * Editors.
          */
 
-        public static void OpenConfigEditor()
+        public static void OpenConfigEditor<T>() where T : ConfigNode
         {
             if (Instance == null)
                 throw new Exception("UnityConfig tool is not configured. Call UnityConfig.Configure on Editor load.");
@@ -89,7 +84,7 @@ namespace Build1.UnityConfig
          * Loading.
          */
 
-        public static void LoadConfig<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
+        public static void LoadConfig<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
             #if UNITY_EDITOR
 
@@ -101,49 +96,12 @@ namespace Build1.UnityConfig
 
             #endif
 
-            LoadConfigEditorRuntime<T>(onComplete, onError);
+            LoadConfigRuntime(onComplete, onError);
         }
-
-        public static void LoadConfig<T, R>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
-                                                                                             where R : IConfigRepository
-        {
-            #if UNITY_EDITOR
-
-            if (!Application.isPlaying)
-            {
-                LoadConfigEditor(onComplete, onError);
-                return;
-            }
-
-            #endif
-
-            LoadConfigEditorRuntime<T, R>(onComplete, onError);
-        }
-
-        private static void LoadConfigEditorRuntime<T, R>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
-                                                                                                           where R : IConfigRepository
-        {
-            var settings = ConfigSettings.Get();
-            var configSource = settings.Source;
-            if (configSource == ConfigSettings.SourceFirebase)
-            {
-                var firebaseRepository = (IConfigRepository)Activator.CreateInstance<R>();
-                firebaseRepository.Load(onComplete, onError);
-            }
-            else
-            {
-                ConfigRepositoryLocal<T>.Load(onComplete, onError);
-            }
-        }
-
-        private static void LoadConfigEditorRuntime<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
-        {
-            ConfigRepositoryLocal<T>.Load(onComplete, onError);
-        }
-
+        
         #if UNITY_EDITOR
 
-        private static void LoadConfigEditor<T>(Action<T> onComplete, Action<Exception> onError) where T : ConfigNode
+        private static void LoadConfigEditor<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
             if (Instance == null)
                 throw new Exception("UnityConfig tool is not configured. Call UnityConfig.Configure on Editor load.");
@@ -155,7 +113,7 @@ namespace Build1.UnityConfig
             var settings = ConfigSettings.Get();
             var configSource = settings.Source;
 
-            ConfigEditorModel.LoadConfig(configSource, node => { onComplete?.Invoke((T)node); }, exception =>
+            ConfigEditorModel.LoadConfig(configSource, Instance.ConfigType, node => { onComplete?.Invoke((T)node); }, exception =>
             {
                 Debug.LogError(exception);
                 onError?.Invoke(exception);
@@ -163,5 +121,37 @@ namespace Build1.UnityConfig
         }
 
         #endif
+
+        private static void LoadConfigRuntime<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
+        {
+            var settings = ConfigSettings.Get();
+            if (settings.Source == ConfigSettings.SourceFirebase)
+            {
+                #if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE
+
+                ConfigRepositoryFirebase.Load(settings, onComplete, exception =>
+                {
+                    if (exception.error == ConfigError.NetworkError && settings.FallbackEnabled)
+                    {
+                        FallbackUsed = true;
+                        ConfigRepositoryLocal.Load("config_fallback", onComplete, onError);
+                    }
+                    else
+                    {
+                        onError?.Invoke(exception);
+                    }
+                });
+                
+                #else
+                
+                onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
+                
+                #endif
+            }
+            else
+            {
+                ConfigRepositoryLocal.Load("config", onComplete, onError);
+            }
+        }
     }
 }
