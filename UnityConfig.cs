@@ -67,7 +67,7 @@ namespace Build1.UnityConfig
          * Editors.
          */
 
-        public static void OpenConfigEditor<T>() where T : ConfigNode
+        public static void OpenConfigEditor()
         {
             if (Instance == null)
                 throw new Exception("UnityConfig tool is not configured. Call UnityConfig.Configure on Editor load.");
