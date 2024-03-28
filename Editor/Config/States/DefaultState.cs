@@ -52,7 +52,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                 EGUI.Space(5);
 
                 var fallbackAvailable = settings.Source != ConfigSettings.SourceFirebase || settings.ResetSourceForPlatformBuilds; 
-                EGUI.Enabled(fallbackAvailable, () =>
+                EGUI.Enabled(fallbackAvailable && !Application.isPlaying, () =>
                 {
                     EGUI.Checkbox("Fallback enabled", settings.FallbackEnabled, value =>
                     {
