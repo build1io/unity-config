@@ -50,14 +50,54 @@ namespace Build1.UnityConfig.Editor.Config.States
                 });
 
                 EGUI.Space(5);
-                EGUI.Checkbox("Fallback enabled", settings.FallbackEnabled, value =>
+
+                var fallbackAvailable = settings.Source != ConfigSettings.SourceFirebase || settings.ResetSourceForPlatformBuilds; 
+                EGUI.Enabled(fallbackAvailable, () =>
                 {
-                    settings.SetFallbackEnabled(value);
+                    EGUI.Checkbox("Fallback enabled", settings.FallbackEnabled, value =>
+                    {
+                        settings.SetFallbackEnabled(value);
+                    });
                 });
+
+                if (!fallbackAvailable)
+                {
+                    EGUI.Space(5);
+                    EGUI.MessageBox("Config fallback unavailable for embed configs sources.", MessageType.Info);    
+                }
+                
+                if (settings.FallbackEnabled)
+                {
+                    EGUI.Space(18);
+                    EGUI.Title("Fallback Config", TitleType.H3, EGUI.OffsetX(5));
+                    EGUI.Label("If config loading will be taking too long the fallback version will be used. You may specify the timeout of fallback version application.");
+                    EGUI.Space(3);
+                    
+                    var fallbackConfigs = configs.Where(c => c != ConfigSettings.SourceFirebase).ToList();
+                    var fallbackConfigSourceIndex = fallbackConfigs.IndexOf(model.Settings.FallbackSource);
+                    if (fallbackConfigSourceIndex == -1)
+                    {
+                        fallbackConfigSourceIndex = 0;
+                        settings.SetFallbackSource(fallbackConfigs[fallbackConfigSourceIndex]);
+                    }
+                    
+                    EGUI.Label("Source", EGUI.FontStyle(FontStyle.Bold));
+                    EGUI.DropDown(fallbackConfigs, fallbackConfigSourceIndex, EGUI.DropDownHeight01, newIndex =>
+                    {
+                        settings.SetFallbackSource(fallbackConfigs[newIndex]);
+                    });
+                    EGUI.Space(18);
+
+                    EGUI.Label("Timeout (Sec)", EGUI.FontStyle(FontStyle.Bold));
+                    EGUI.Int(settings.FallbackTimeout).OnChange(timeout =>
+                    {
+                        settings.SetFallbackTimeout(timeout);
+                    });
+                }
                 
                 model.TrySaveSettings();
 
-                EGUI.Space(40);
+                EGUI.Space(33);
 
                 configs = configs.Concat(new[] { "New..." }).ToList();
 

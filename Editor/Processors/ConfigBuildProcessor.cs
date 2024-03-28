@@ -30,28 +30,11 @@ namespace Build1.UnityConfig.Editor.Processors
                 settings.SetSource(ConfigSettings.SourceDefault);
                 ConfigProcessor.TrySaveSettings(settings);    
             }
-
-            // var configEmbedDefault = ConfigProcessor.GetEmbedDefaultEnabled();
-            // if (configEmbedDefault && configSource == ConfigSource.Default)
-            // {
-            //     Debug.Log($"Config: Updating embed copy of {ConfigSource.Default}...");
-            //
-            //     ConfigEditorModel.LoadConfig(configSource, config =>
-            //     {
-            //         var json = config.ToJson(false);
-            //         ConfigProcessor.SaveConfigToResources(json);
-            //         
-            //         Debug.Log("Config: Updated.");
-            //     }, exception =>
-            //     {
-            //         Debug.LogError($"Config: Update failed. Error: {exception}");
-            //     });
-            // }
         }
 
         public void OnPostprocessBuild(BuildReport report)
         {
-            if (_configSourceOriginal == null)
+            if (_settings == null || _configSourceOriginal == null)
                 return;
             
             Debug.Log($"Config: Resetting original Config Source {_configSourceOriginal}...");

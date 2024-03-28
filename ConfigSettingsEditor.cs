@@ -25,6 +25,9 @@ namespace Build1.UnityConfig
 
             Source = value;
             SetDirty();
+
+            if (Source == ConfigSettings.SourceFirebase && !ResetSourceForPlatformBuilds && FallbackEnabled)
+                SetFallbackEnabled(false);
         }
 
         public void SetResetForPlatformBuilds(bool value)
@@ -34,6 +37,9 @@ namespace Build1.UnityConfig
 
             ResetSourceForPlatformBuilds = value;
             SetDirty();
+
+            if (Source == ConfigSettings.SourceFirebase && !ResetSourceForPlatformBuilds && FallbackEnabled)
+                SetFallbackEnabled(false);
         }
 
         public void SetFallbackEnabled(bool value)
@@ -42,6 +48,27 @@ namespace Build1.UnityConfig
                 return;
 
             FallbackEnabled = value;
+            SetDirty();
+            
+            if (FallbackEnabled && FallbackTimeout == 0)
+                SetFallbackTimeout(3);
+        }
+
+        public void SetFallbackSource(string value)
+        {
+            if (FallbackSource == value)
+                return;
+
+            FallbackSource = value;
+            SetDirty();
+        }
+
+        public void SetFallbackTimeout(int value)
+        {
+            if (FallbackTimeout == value)
+                return;
+
+            FallbackTimeout = value;
             SetDirty();
         }
 

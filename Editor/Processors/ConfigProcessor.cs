@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Google;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
@@ -86,7 +87,7 @@ namespace Build1.UnityConfig.Editor.Processors
             var configResourcePath = resourcesFolderPath + "config.json";
             if (File.Exists(configResourcePath))
                 File.Delete(configResourcePath);
-
+            
             var configResourcePathMeta = resourcesFolderPath + "config.json.meta";
             if (File.Exists(configResourcePathMeta))
                 File.Delete(configResourcePathMeta);
@@ -94,6 +95,17 @@ namespace Build1.UnityConfig.Editor.Processors
             // Firebase is remote, so we don't need to embed anything into the build.
             if (settings.Source != ConfigSettings.SourceFirebase)
                 File.Copy(GetEditorConfigFilePath(settings.Source), configResourcePath);
+            
+            var configFallbackResourcePath = resourcesFolderPath + "config_fallback.json";
+            if (File.Exists(configFallbackResourcePath))
+                File.Delete(configFallbackResourcePath);
+            
+            var configFallbackResourcePathMeta = resourcesFolderPath + "config_fallback.json.meta";
+            if (File.Exists(configFallbackResourcePathMeta))
+                File.Delete(configFallbackResourcePathMeta);
+            
+            if (settings.FallbackEnabled)
+                File.Copy(GetEditorConfigFilePath(settings.FallbackSource), configFallbackResourcePath);
 
             AssetDatabase.Refresh(ImportAssetOptions.Default);
         }
@@ -156,10 +168,14 @@ namespace Build1.UnityConfig.Editor.Processors
             var filePath = GetEditorConfigFilePath(configName);
             File.WriteAllText(filePath, content);
 
-            var source = GetSettings().Source;
+            var settings = GetSettings();
+            var source = settings.Source;
             if (source == configName && source != ConfigSettings.SourceFirebase)
                 File.WriteAllText(resourcesFolderPath + "config.json", content);
 
+            if (settings.FallbackEnabled && settings.FallbackSource == configName)
+                File.WriteAllText(resourcesFolderPath + "config_fallback.json", content);
+            
             AssetDatabase.Refresh(ImportAssetOptions.Default);
         }
 
