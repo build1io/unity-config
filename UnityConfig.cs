@@ -14,11 +14,11 @@ namespace Build1.UnityConfig
 {
     public sealed class UnityConfig
     {
+        public static bool FallbackUsed { get; private set; }
+        
         #if UNITY_EDITOR
 
         internal static UnityConfig Instance { get; private set; }
-
-        public static bool FallbackUsed { get; private set; }
 
         public static event Action<ConfigNode> OnConfigSaving;
         public static event Action<ConfigNode> OnConfigSaved;
