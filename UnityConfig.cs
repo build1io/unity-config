@@ -15,10 +15,11 @@ namespace Build1.UnityConfig
     public sealed class UnityConfig
     {
         public static bool FallbackUsed { get; private set; }
-        
+
         #if UNITY_EDITOR
 
-        internal static UnityConfig Instance { get; private set; }
+        internal static UnityConfig Instance            { get; private set; }
+        internal static ConfigNode  CurrentEditorConfig { get; set; }
 
         public static event Action<ConfigNode> OnConfigSaving;
         public static event Action<ConfigNode> OnConfigSaved;
@@ -98,7 +99,7 @@ namespace Build1.UnityConfig
 
             LoadConfigRuntime(onComplete, onError);
         }
-        
+
         #if UNITY_EDITOR
 
         private static void LoadConfigEditor<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
@@ -118,6 +119,11 @@ namespace Build1.UnityConfig
                 Debug.LogError(exception);
                 onError?.Invoke(exception);
             });
+        }
+
+        public static T GetCurrentEditorConfig<T>() where T : ConfigNode
+        {
+            return (T)CurrentEditorConfig;
         }
 
         #endif
@@ -141,12 +147,11 @@ namespace Build1.UnityConfig
                         onError?.Invoke(exception);
                     }
                 });
-                
+
                 #else
-                
                 Debug.LogError("Remote Config loading from Firebase is unavailable. Probably you need to add Firebase Remote Config package into the project.");
                 onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
-                
+
                 #endif
             }
             else

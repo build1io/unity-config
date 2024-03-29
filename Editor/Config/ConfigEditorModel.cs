@@ -57,6 +57,8 @@ namespace Build1.UnityConfig.Editor.Config
 
             SelectedConfigName = null;
             SelectedConfig = null;
+            
+            UnityConfig.CurrentEditorConfig = null;
 
             SelectedConfigSections = null;
             SelectedConfigSection = null;
@@ -86,6 +88,8 @@ namespace Build1.UnityConfig.Editor.Config
 
             LoadConfig(configName, UnityConfig.Instance.ConfigType, config =>
             {
+                UnityConfig.CurrentEditorConfig = config;
+                
                 SelectedConfig = config;
                 SelectedConfigName = configName;
 
