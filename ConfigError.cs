@@ -6,6 +6,8 @@ namespace Build1.UnityConfig
         Unknown                         = -1,
         None                            = 0,
         NetworkError                    = 1,
-        ConfigFieldNotFound             = 2
+        ConfigFieldNotFound             = 2,
+        ConfigResourceNotFound          = 3,
+        ParsingError                    = 4
     }
 }

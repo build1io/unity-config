@@ -51,7 +51,7 @@ namespace Build1.UnityConfig
             SetDirty();
             
             if (FallbackEnabled && FallbackTimeout == 0)
-                SetFallbackTimeout(3);
+                SetFallbackTimeout(3000);
         }
 
         public void SetFallbackSource(string value)

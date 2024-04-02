@@ -8,16 +8,26 @@ namespace Build1.UnityConfig.Repositories
     {
         internal static void Load<T>(string fileName, Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
+            string json;
             T config;
             
             try
             {
-                var json = Resources.Load<TextAsset>(fileName).text;
+                json = Resources.Load<TextAsset>(fileName).text;
+            }
+            catch
+            {
+                onError?.Invoke(new ConfigException(ConfigError.ConfigResourceNotFound));
+                return;
+            }
+            
+            try
+            {
                 config = JsonConvert.DeserializeObject<T>(json);
             }
-            catch (Exception exception)
+            catch
             {
-                onError?.Invoke(ConfigException.FromException(exception));
+                onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}"));
                 return;
             }
 

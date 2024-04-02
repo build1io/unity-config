@@ -209,7 +209,7 @@ namespace Build1.UnityConfig.Editor.Config
             }
             catch (Exception exception)
             {
-                onError?.Invoke(ConfigException.FromException(exception));
+                onError?.Invoke(exception.ToConfigException());
             }
         }
 

@@ -1,4 +1,4 @@
-#if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE
+#if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE && (UNITY_EDITOR || !UNITY_WEBGL)
 
 using System;
 using Build1.UnityConfig.Utils;
@@ -11,7 +11,7 @@ namespace Build1.UnityConfig.Repositories
 {
     internal static class ConfigRepositoryFirebase
     {
-        private const string ConfigField = "config";
+        public const string ConfigField = "config";
 
         public static void Load(ConfigSettings settings, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
@@ -65,7 +65,7 @@ namespace Build1.UnityConfig.Repositories
                                      {
                                          if (settingsTask.IsFaulted)
                                          {
-                                             onError?.Invoke(ConfigException.FromException(settingsTask.Exception));
+                                             onError?.Invoke(settingsTask.Exception.ToConfigException());
                                              return;
                                          }
 
@@ -74,7 +74,7 @@ namespace Build1.UnityConfig.Repositories
             }
             catch (Exception exception)
             {
-                onError?.Invoke(ConfigException.FromException(exception));
+                onError?.Invoke(exception.ToConfigException());
             }
         }
 
@@ -88,7 +88,7 @@ namespace Build1.UnityConfig.Repositories
                                      {
                                          if (task.IsFaulted)
                                          {
-                                             onError?.Invoke(ConfigException.FromException(task.Exception));
+                                             onError?.Invoke(task.Exception.ToConfigException());
                                              return;
                                          }
 
@@ -97,7 +97,7 @@ namespace Build1.UnityConfig.Repositories
             }
             catch (Exception exception)
             {
-                onError?.Invoke(ConfigException.FromException(exception));
+                onError?.Invoke(exception.ToConfigException());
             }
         }
 
@@ -122,7 +122,7 @@ namespace Build1.UnityConfig.Repositories
                 {
                     Debug.LogException(exception);
 
-                    onError?.Invoke(ConfigException.FromException(exception));
+                    onError?.Invoke(exception.ToConfigException());
                     return;
                 }
 
@@ -131,7 +131,7 @@ namespace Build1.UnityConfig.Repositories
             catch
                 (Exception exception)
             {
-                onError?.Invoke(ConfigException.FromException(exception));
+                onError?.Invoke(exception.ToConfigException());
             }
         }
     }

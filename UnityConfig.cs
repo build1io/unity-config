@@ -135,7 +135,7 @@ namespace Build1.UnityConfig
             {
                 #if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE
 
-                ConfigRepositoryFirebase.Load(settings, onComplete, exception =>
+                void onErrorInner(ConfigException exception)
                 {
                     if (exception.error == ConfigError.NetworkError && settings.FallbackEnabled)
                     {
@@ -146,9 +146,20 @@ namespace Build1.UnityConfig
                     {
                         onError?.Invoke(exception);
                     }
-                });
-
+                }
+                
+                #if UNITY_WEBGL && !UNITY_EDITOR
+                
+                ConfigRepositoryFirebaseWebGL.Load(settings, onComplete, onErrorInner);
+                
                 #else
+                
+                ConfigRepositoryFirebase.Load(settings, onComplete, onErrorInner);
+                
+                #endif
+                
+                #else
+                
                 Debug.LogError("Remote Config loading from Firebase is unavailable. Probably you need to add Firebase Remote Config package into the project.");
                 onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
 
