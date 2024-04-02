@@ -45,6 +45,7 @@ namespace Build1.UnityConfig.Editor.Config.States
 
             var configViewClicked = false;
             var configCopyClicked = false;
+            var configCopyMinClicked = false;
             var configCompressedCopyClicked = false;
 
             var sectionSaveClicked = false;
@@ -57,6 +58,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             {
                 EGUI.Title(model.SelectedConfigName, TitleType.H3, EGUI.OffsetX(5), EGUI.StretchedWidth(), EGUI.StretchedHeight(), EGUI.TextAnchor(TextAnchor.MiddleLeft));
                 EGUI.Button("Copy Json Comp.", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCompressedCopyClicked);
+                EGUI.Button("Copy Json Min.", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCopyMinClicked);
                 EGUI.Button("Copy Json", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCopyClicked);
                 EGUI.Button("View Json", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configViewClicked);
             });
@@ -154,6 +156,9 @@ namespace Build1.UnityConfig.Editor.Config.States
                 JsonViewer.Open(model.SelectedConfigName, model.SelectedConfig.ToJson(false));
 
             if (configCopyClicked)
+                EGUI.CopyToClipboard(model.SelectedConfig.ToJson(true));
+            
+            if (configCopyMinClicked)
                 EGUI.CopyToClipboard(model.SelectedConfig.ToJson(false));
 
             if (configCompressedCopyClicked)
