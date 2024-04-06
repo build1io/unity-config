@@ -167,14 +167,23 @@ namespace Build1.UnityConfig.Editor.Config.States
             if (sectionSaveClicked && section != null)
             {
                 var validationErrorMessage = section.OnValidate(model.SelectedConfigSection);
-                if (validationErrorMessage == null)
+                if (validationErrorMessage != null)
                 {
-                    model.SaveSection();
-                    EGUI.Log("Config: Saved");
+                    EGUI.LogError($"Config: Not saved. Error: \"{validationErrorMessage}\"");
+                    
                 }
                 else
                 {
-                    EGUI.LogError($"Config: Not saved. Error: \"{validationErrorMessage}\"");
+                    var proceed = true;
+                    var json = model.SelectedConfig.ToJson(false);
+                    if (json.Contains("с") || json.Contains("С"))
+                        proceed = EditorUtility.DisplayDialog("Warning", "Config JSON contains cyrillic C symbol.\nThat's probably a typo.", "Proceed", "Abort");
+
+                    if (proceed)
+                    {
+                        model.SaveSection();
+                        EGUI.Log("Config: Saved");    
+                    }
                 }
             }
 
