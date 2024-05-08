@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using Build1.UnityEGUI;
 using Build1.UnityEGUI.Components.Label;
@@ -89,10 +91,44 @@ namespace Build1.UnityConfig.Editor.Config.States
                     EGUI.Space(18);
 
                     EGUI.Label("Timeout (Ms)", EGUI.FontStyle(FontStyle.Bold));
-                    EGUI.Int(settings.FallbackTimeout).OnChange(timeout =>
+                    EGUI.Int(settings.FallbackTimeout, EGUI.Height(EGUI.ButtonHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft)).OnChange(timeout =>
                     {
                         settings.SetFallbackTimeout(timeout);
                     });
+                }
+                
+                EGUI.Space(18);
+                EGUI.Title("Mode", TitleType.H3, EGUI.OffsetX(5));
+                EGUI.Label("The mode configures parsing and editor tools behavior.");
+
+                var modes = new List<string> { ConfigMode.Default.ToString(), ConfigMode.Decomposed.ToString() };
+                var index = modes.LastIndexOf(settings.Mode.ToString());
+                EGUI.DropDown(modes, index, EGUI.DropDownHeight01, newIndex =>
+                {
+                    settings.SetMode((ConfigMode)Enum.Parse(typeof(ConfigMode), modes[newIndex], true));
+                });
+                
+                EGUI.Space(15);
+                
+                switch (settings.Mode)
+                {
+                    case ConfigMode.Default:
+                        EGUI.MessageBox("The Default mode uses a single Firebase Remote Config parameter for config reading and parsing.", MessageType.Info);
+                        EGUI.Space(9);
+                        EGUI.Label("Parameter Name", EGUI.FontStyle(FontStyle.Bold));
+                        EGUI.Label("Name of the parameter that must be used as source for config.");
+                        EGUI.TextField(settings.ParameterName, EGUI.ButtonHeight02, TextAnchor.MiddleLeft, valueNew =>
+                        {
+                            settings.SetParameterName(valueNew);
+                        });
+                        break;
+                    
+                    case ConfigMode.Decomposed:
+                        EGUI.MessageBox("In Decomposed mode config is constructed from many fields using json properties naming for linking.", MessageType.Info);
+                        break;
+                    
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
                 
                 model.TrySaveSettings();
@@ -101,7 +137,7 @@ namespace Build1.UnityConfig.Editor.Config.States
 
                 configs = configs.Concat(new[] { "New..." }).ToList();
 
-                EGUI.Title("Config Editor", TitleType.H3, EGUI.OffsetX(5));
+                EGUI.Title("Configs", TitleType.H3, EGUI.OffsetX(5));
                 EGUI.Space(5);
 
                 EGUI.Label("Select config to view / edit.");

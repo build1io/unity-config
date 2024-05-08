@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Build1.UnityConfig.Editor.Export;
 using Build1.UnityConfig.Editor.Json;
 using Build1.UnityConfig.Utils;
 using Build1.UnityEGUI;
@@ -47,6 +48,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             var configCopyClicked = false;
             var configCopyMinClicked = false;
             var configCompressedCopyClicked = false;
+            var exportClicked = false;
 
             var sectionSaveClicked = false;
             var sectionRevertClicked = false;
@@ -57,8 +59,21 @@ namespace Build1.UnityConfig.Editor.Config.States
             EGUI.Horizontally(() =>
             {
                 EGUI.Title(model.SelectedConfigName, TitleType.H3, EGUI.OffsetX(5), EGUI.StretchedWidth(), EGUI.StretchedHeight(), EGUI.TextAnchor(TextAnchor.MiddleLeft));
-                EGUI.Button("Copy Json Comp.", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCompressedCopyClicked);
-                EGUI.Button("Copy Json Min.", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCopyMinClicked);
+
+                switch (model.Settings.Mode)
+                {
+                    case ConfigMode.Default:
+                        EGUI.Button("Copy Json Comp.", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCompressedCopyClicked);
+                        EGUI.Button("Copy Json Min.", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCopyMinClicked);
+                        
+                        break;
+                    case ConfigMode.Decomposed:
+                        EGUI.Button("Export", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out exportClicked);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                
                 EGUI.Button("Copy Json", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configCopyClicked);
                 EGUI.Button("View Json", EGUI.Size(130, EGUI.DropDownHeight01)).Clicked(out configViewClicked);
             });
@@ -164,13 +179,15 @@ namespace Build1.UnityConfig.Editor.Config.States
             if (configCompressedCopyClicked)
                 EGUI.CopyToClipboard(model.SelectedConfig.ToJson(false).Compress());
 
+            if (exportClicked)
+                ExportWindow.Open(model);
+
             if (sectionSaveClicked && section != null)
             {
                 var validationErrorMessage = section.OnValidate(model.SelectedConfigSection);
                 if (validationErrorMessage != null)
                 {
                     EGUI.LogError($"Config: Not saved. Error: \"{validationErrorMessage}\"");
-                    
                 }
                 else
                 {

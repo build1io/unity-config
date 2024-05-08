@@ -1,14 +1,18 @@
+using System;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
 namespace Build1.UnityConfig
 {
     internal sealed class ConfigSettingsEditor
     {
-        [JsonProperty("source")]           public string Source                       { get; private set; }
-        [JsonProperty("source_reset")]     public bool   ResetSourceForPlatformBuilds { get; private set; }
-        [JsonProperty("fallback_enabled")] public bool   FallbackEnabled              { get; private set; }
-        [JsonProperty("fallback_source")]  public string FallbackSource               { get; private set; }
-        [JsonProperty("fallback_timeout")] public int    FallbackTimeout              { get; private set; }
+        [JsonProperty("source")]           public string     Source                       { get; private set; }
+        [JsonProperty("mode")]             public ConfigMode Mode                         { get; private set; }
+        [JsonProperty("param")]            public string     ParameterName                { get; private set; }
+        [JsonProperty("source_reset")]     public bool       ResetSourceForPlatformBuilds { get; private set; }
+        [JsonProperty("fallback_enabled")] public bool       FallbackEnabled              { get; private set; }
+        [JsonProperty("fallback_source")]  public string     FallbackSource               { get; private set; }
+        [JsonProperty("fallback_timeout")] public int        FallbackTimeout              { get; private set; }
 
         [JsonIgnore] public bool IsDirty { get; private set; }
 
@@ -30,6 +34,36 @@ namespace Build1.UnityConfig
                 SetFallbackEnabled(false);
         }
 
+        public void SetMode(ConfigMode mode)
+        {
+            if (Mode == mode)
+                return;
+
+            Mode = mode;
+            SetDirty();
+
+            switch (Mode)
+            {
+                case ConfigMode.Default:
+                    SetParameterName("config");
+                    break;
+                case ConfigMode.Decomposed:
+                    SetParameterName(null);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        public void SetParameterName(string param)
+        {
+            if (ParameterName == param)
+                return;
+
+            ParameterName = param == "config" ? null : param;
+            SetDirty();
+        }
+
         public void SetResetForPlatformBuilds(bool value)
         {
             if (ResetSourceForPlatformBuilds == value)
@@ -49,7 +83,7 @@ namespace Build1.UnityConfig
 
             FallbackEnabled = value;
             SetDirty();
-            
+
             if (FallbackEnabled && FallbackTimeout == 0)
                 SetFallbackTimeout(3000);
         }
@@ -80,6 +114,31 @@ namespace Build1.UnityConfig
         private void SetDirty()   { IsDirty = true; }
 
         /*
+         * Serialization.
+         */
+
+        [OnSerializing]
+        private void OnSerializing(StreamingContext context)
+        {
+            if (ParameterName == "config")
+                ParameterName = null;
+        }
+
+        [OnSerialized]
+        private void OnSerialized(StreamingContext context)
+        {
+            if (string.IsNullOrWhiteSpace(ParameterName))
+                ParameterName = "config";
+        }
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext context)
+        {
+            if (Mode == ConfigMode.Default && string.IsNullOrWhiteSpace(ParameterName))
+                ParameterName = "config";
+        }
+
+        /*
          * Static.
          */
 
@@ -88,6 +147,8 @@ namespace Build1.UnityConfig
             return new ConfigSettingsEditor
             {
                 Source = source,
+                Mode = ConfigMode.Default,
+                ParameterName = "config",
                 ResetSourceForPlatformBuilds = true,
                 FallbackEnabled = false
             };
