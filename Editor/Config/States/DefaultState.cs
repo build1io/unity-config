@@ -34,7 +34,7 @@ namespace Build1.UnityConfig.Editor.Config.States
 
             EGUI.Scroll(ref _scrollPosition, () =>
             {
-                EGUI.Title("Config Source", TitleType.H3, EGUI.OffsetX(5));
+                EGUI.Title("Source", TitleType.H3, EGUI.OffsetX(5));
                 EGUI.Space(5);
 
                 EGUI.Label("Selected config (any except Firebase) will be included and used in the build.\nFirebase will make app load config from Firebase remote.");
@@ -71,7 +71,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                 if (settings.FallbackEnabled)
                 {
                     EGUI.Space(18);
-                    EGUI.Title("Fallback Config", TitleType.H3, EGUI.OffsetX(5));
+                    EGUI.Title("Fallback", TitleType.H3, EGUI.OffsetX(5));
                     EGUI.Label("If config loading will be taking too long the fallback version will be used. You may specify the timeout of fallback version application.");
                     EGUI.Space(3);
                     
