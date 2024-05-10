@@ -187,7 +187,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                 var validationErrorMessage = section.OnValidate(model.SelectedConfigSection);
                 if (validationErrorMessage != null)
                 {
-                    EGUI.LogError($"Config: Not saved. Error: \"{validationErrorMessage}\"");
+                    EGUI.LogError($"Config: Validation error: \"{validationErrorMessage}\"");
                 }
                 else
                 {
