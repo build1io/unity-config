@@ -8,37 +8,48 @@ using UnityEngine;
 
 namespace Build1.UnityConfig.Editor
 {
-    public abstract class ConfigSectionEditor
+    public abstract class ConfigSubSectionEditor
     {
-        public abstract string SectionName { get; }
+        public virtual string SubSectionName { get; private set; }
+        public         object DataObject     { get; private set; }
 
-        public abstract void   OnEGUI(object     dto);
-        public abstract string OnValidate(object dto);
+        public virtual void SetData(object dto, string name)
+        {
+            DataObject = dto;
+            SubSectionName = name;
+        }
+
+        public abstract void   OnEGUI();
+        public abstract string OnValidate();
     }
 
-    public abstract class ConfigSectionEditor<T> : ConfigSectionEditor where T : ConfigNode
+    public abstract class ConfigSubSectionEditor<T> : ConfigSubSectionEditor
     {
         protected T Data { get; private set; }
 
         private int                                      _foldsIndex;
-        private Dictionary<Type, ConfigSubSectionEditor> _subSectionsEditors;
+        private Dictionary<object, ConfigSubSectionEditor> _subSectionsEditors;
 
-        /*
-         * Rendering.
-         */
-
-        public override void OnEGUI(object dto)
+        public override void SetData(object dto, string name)
         {
+            base.SetData(dto, name ?? typeof(T).Name);
+
             try
             {
                 Data = (T)dto;
             }
             catch
             {
-                Debug.LogError($"Wrong section name for {GetType().FullName} [\"{SectionName}\"]. Cast type failed: {dto.GetType().FullName} != {typeof(T).FullName}");
-                return;
+                Debug.LogError($"Wrong section name for {GetType().FullName}. Cast type failed: {dto.GetType().FullName} != {typeof(T).FullName}");
             }
+        }
 
+        /*
+         * Rendering.
+         */
+
+        public override void OnEGUI()
+        {
             _foldsIndex = 0;
 
             OnEGUI(Data);
@@ -57,13 +68,13 @@ namespace Build1.UnityConfig.Editor
 
         protected void RenderSubSection<S, D>(D dto, string name) where S : ConfigSubSectionEditor<D>
         {
-            _subSectionsEditors ??= new Dictionary<Type, ConfigSubSectionEditor>();
+            _subSectionsEditors ??= new Dictionary<object, ConfigSubSectionEditor>();
 
-            if (!_subSectionsEditors.TryGetValue(typeof(S), out var subSectionEditor))
+            if (!_subSectionsEditors.TryGetValue(dto, out var subSectionEditor))
             {
                 subSectionEditor = (S)Activator.CreateInstance(typeof(S));
                 subSectionEditor.SetData(dto, name);
-                
+
                 _subSectionsEditors[typeof(S)] = subSectionEditor;
             }
 
@@ -78,10 +89,7 @@ namespace Build1.UnityConfig.Editor
 
                     if (!folded)
                     {
-                        EGUI.Button("...", EGUI.Size(30, EGUI.ButtonHeight04)).OnClick(() =>
-                        {
-                            ConfigSubSectionWindow.Open(subSectionEditor);
-                        });    
+                        EGUI.Button("...", EGUI.Size(30, EGUI.ButtonHeight04)).OnClick(() => { ConfigSubSectionWindow.Open(subSectionEditor); });
                     }
                 });
 
@@ -102,10 +110,8 @@ namespace Build1.UnityConfig.Editor
          * Validation.
          */
 
-        public override string OnValidate(object dto)
+        public override string OnValidate()
         {
-            Data = (T)dto;
-
             if (_subSectionsEditors != null)
             {
                 foreach (var subSectionEditor in _subSectionsEditors.Values)
