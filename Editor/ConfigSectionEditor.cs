@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Build1.UnityEGUI;
 using Build1.UnityEGUI.Types;
+using UnityEditor;
 using UnityEngine;
 
 namespace Build1.UnityConfig.Editor
@@ -20,7 +21,6 @@ namespace Build1.UnityConfig.Editor
     {
         protected T Data { get; private set; }
 
-        private int                                      _foldsIndex;
         private Dictionary<Type, ConfigSubSectionEditor> _subSectionsEditors;
 
         /*
@@ -38,8 +38,6 @@ namespace Build1.UnityConfig.Editor
                 Debug.LogError($"Wrong section name for {GetType().FullName} [\"{SectionName}\"]. Cast type failed: {dto.GetType().FullName} != {typeof(T).FullName}");
                 return;
             }
-
-            _foldsIndex = 0;
 
             OnEGUI(Data);
         }
@@ -66,16 +64,18 @@ namespace Build1.UnityConfig.Editor
                 
                 _subSectionsEditors[typeof(S)] = subSectionEditor;
             }
-
-            EGUI.GetFoldInfo(this, out var folds);
+            
             EGUI.Panel(10, () =>
             {
-                var folded = folds[_foldsIndex];
+                var key    = subSectionEditor.PrefsFoldedKey;
+                var folded = EditorPrefs.GetBool(key, false);
 
                 EGUI.Horizontally(() =>
                 {
                     EGUI.Foldout(subSectionEditor.SubSectionName, FoldoutType.Bold, ref folded);
 
+                    EditorPrefs.SetBool(key, folded);
+                    
                     if (!folded)
                     {
                         EGUI.Button("...", EGUI.Size(30, EGUI.ButtonHeight04)).OnClick(() =>
@@ -85,8 +85,6 @@ namespace Build1.UnityConfig.Editor
                     }
                 });
 
-                folds[_foldsIndex] = folded;
-
                 if (folded)
                 {
                     EGUI.Space(10);
@@ -94,8 +92,6 @@ namespace Build1.UnityConfig.Editor
                     subSectionEditor.OnEGUI();
                 }
             });
-
-            _foldsIndex++;
         }
 
         /*

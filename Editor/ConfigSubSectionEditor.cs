@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Build1.UnityEGUI;
 using Build1.UnityEGUI.Types;
+using UnityEditor;
 using UnityEngine;
 
 namespace Build1.UnityConfig.Editor
@@ -11,12 +12,14 @@ namespace Build1.UnityConfig.Editor
     public abstract class ConfigSubSectionEditor
     {
         public virtual string SubSectionName { get; private set; }
-        public         object DataObject     { get; private set; }
+        internal       object DataObject     { get; private set; }
+        internal       string PrefsFoldedKey { get; private set; }
 
         public virtual void SetData(object dto, string name)
         {
-            DataObject = dto;
             SubSectionName = name;
+            DataObject = dto;
+            PrefsFoldedKey = $"{GetType().Name}_{name}_folded".ToLower();
         }
 
         public abstract void   OnEGUI();
@@ -27,7 +30,6 @@ namespace Build1.UnityConfig.Editor
     {
         protected T Data { get; private set; }
 
-        private int                                      _foldsIndex;
         private Dictionary<object, ConfigSubSectionEditor> _subSectionsEditors;
 
         public override void SetData(object dto, string name)
@@ -50,8 +52,6 @@ namespace Build1.UnityConfig.Editor
 
         public override void OnEGUI()
         {
-            _foldsIndex = 0;
-
             OnEGUI(Data);
         }
 
@@ -78,22 +78,22 @@ namespace Build1.UnityConfig.Editor
                 _subSectionsEditors[typeof(S)] = subSectionEditor;
             }
 
-            EGUI.GetFoldInfo(this, out var folds);
             EGUI.Panel(10, () =>
             {
-                var folded = folds[_foldsIndex];
+                var key    = subSectionEditor.PrefsFoldedKey;
+                var folded = EditorPrefs.GetBool(subSectionEditor.PrefsFoldedKey, false);
 
                 EGUI.Horizontally(() =>
                 {
                     EGUI.Foldout(subSectionEditor.SubSectionName, FoldoutType.Bold, ref folded);
+                    
+                    EditorPrefs.SetBool(key, folded);
 
                     if (!folded)
                     {
                         EGUI.Button("...", EGUI.Size(30, EGUI.ButtonHeight04)).OnClick(() => { ConfigSubSectionWindow.Open(subSectionEditor); });
                     }
                 });
-
-                folds[_foldsIndex] = folded;
 
                 if (folded)
                 {
@@ -102,8 +102,6 @@ namespace Build1.UnityConfig.Editor
                     subSectionEditor.OnEGUI();
                 }
             });
-
-            _foldsIndex++;
         }
 
         /*
