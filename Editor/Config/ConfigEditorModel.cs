@@ -246,9 +246,9 @@ namespace Build1.UnityConfig.Editor.Config
                 return;
             }
 
-            ConfigProcessor.OnSaving(config);
-
             property.SetValue(config, SelectedConfigSection);
+            
+            ConfigProcessor.OnSaving(config);
 
             SelectedConfigSectionBackup = CloneSection(SelectedConfigSection);
 
