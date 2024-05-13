@@ -20,10 +20,10 @@ namespace Build1.UnityConfig.Editor.Config
             if (_model == null)
             {
                 _model = new ConfigEditorModel();
-                _model.OnReset += EGUI.PropertyWindowCloseAll;
-                _model.OnConfigRemoved += EGUI.PropertyWindowCloseAll;
-                _model.OnSectionChanged += EGUI.PropertyWindowCloseAll;
-                _model.OnSectionReverted += EGUI.PropertyWindowCloseAll;
+                _model.OnReset += Reset;
+                _model.OnConfigRemoved += Reset;
+                _model.OnSectionChanged += Reset;
+                _model.OnSectionReverted += Reset;
             }
             
             _stateDefault ??= new DefaultState(_model);
@@ -48,6 +48,14 @@ namespace Build1.UnityConfig.Editor.Config
                 else
                     _stateDefault.Draw();
             });
+        }
+
+        private void Reset()
+        {
+            _stateDefault.Reset();
+            _stateConfigView.Reset();
+            
+            EGUI.PropertyWindowCloseAll();
         }
 
         /*

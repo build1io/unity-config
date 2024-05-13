@@ -163,6 +163,8 @@ namespace Build1.UnityConfig.Editor.Config.States
             });
         }
 
+        public override void Reset() { }
+
         private void OnAddConfig()
         {
             EGUI.Space(30);

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Build1.UnityConfig.Editor.Processors;
 using Build1.UnityEGUI;
 using Build1.UnityEGUI.Types;
 using UnityEditor;
@@ -15,13 +16,19 @@ namespace Build1.UnityConfig.Editor
 
         public abstract void   OnEGUI(object     dto);
         public abstract string OnValidate(object dto);
+        public virtual  void   OnReset() { }
     }
 
-    public abstract class ConfigSectionEditor<T> : ConfigSectionEditor where T : ConfigNode
+    public abstract class ConfigSectionEditor<T> : ConfigSectionEditor
     {
         protected T Data { get; private set; }
 
         private Dictionary<Type, ConfigSubSectionEditor> _subSectionsEditors;
+
+        protected ConfigSectionEditor()
+        {
+            ConfigAssetsPostProcessor.onAssetsPostProcessed += OnReset;
+        }
 
         /*
          * Rendering.
@@ -61,10 +68,10 @@ namespace Build1.UnityConfig.Editor
             {
                 subSectionEditor = (S)Activator.CreateInstance(typeof(S));
                 subSectionEditor.SetData(dto, name);
-                
+
                 _subSectionsEditors[typeof(S)] = subSectionEditor;
             }
-            
+
             EGUI.Panel(10, () =>
             {
                 var key    = subSectionEditor.PrefsFoldedKey;
@@ -75,13 +82,10 @@ namespace Build1.UnityConfig.Editor
                     EGUI.Foldout(subSectionEditor.SubSectionName, FoldoutType.Bold, ref folded);
 
                     EditorPrefs.SetBool(key, folded);
-                    
+
                     if (!folded)
                     {
-                        EGUI.Button("...", EGUI.Size(30, EGUI.ButtonHeight04)).OnClick(() =>
-                        {
-                            ConfigSubSectionWindow.Open(subSectionEditor);
-                        });    
+                        EGUI.Button("...", EGUI.Size(30, EGUI.ButtonHeight04)).OnClick(() => { ConfigSubSectionWindow.Open(subSectionEditor); });
                     }
                 });
 
@@ -116,6 +120,15 @@ namespace Build1.UnityConfig.Editor
         }
 
         protected abstract string OnValidate(T dto);
+        
+        /*
+         * Resetting.
+         */
+
+        public override void OnReset()
+        {
+            _subSectionsEditors?.Clear();
+        }
     }
 }
 

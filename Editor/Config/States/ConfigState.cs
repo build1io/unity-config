@@ -211,6 +211,12 @@ namespace Build1.UnityConfig.Editor.Config.States
                 JsonViewer.Open(model.SelectedConfigName + "." + model.SelectedConfigSectionName, model.SelectedConfigSection.ToJson(false));
         }
 
+        public override void Reset()
+        {
+            foreach (var section in _sections.Values)
+                section.OnReset();
+        }
+
         private bool AskSaveChanges()
         {
             return EGUI.Alert(Application.productName,
