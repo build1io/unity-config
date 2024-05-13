@@ -2,13 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using Build1.UnityConfig.Utils;
 using Firebase.Extensions;
 using Firebase.RemoteConfig;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using UnityEngine;
 
 namespace Build1.UnityConfig.Repositories
@@ -248,6 +249,15 @@ namespace Build1.UnityConfig.Repositories
                     property.SetValue(instance, value);
                 }
             }
+            
+            var method = instance.GetType().GetMethod("OnDeserialized", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (method == null)
+            {
+                var methods = instance.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance);
+                method = methods.FirstOrDefault(m => m.GetCustomAttribute<OnDeserializedAttribute>() != null);
+            }
+
+            method?.Invoke(instance, new object[] { null });
 
             return instance;
         }
@@ -266,8 +276,6 @@ namespace Build1.UnityConfig.Repositories
                 if (!values.TryGetValue(jsonPropertyAttribute.PropertyName, out var value))
                     continue;
 
-                Debug.Log(jsonPropertyAttribute.PropertyName + ": " + value);
-                
                 if (value is string json)
                 {
                     var propertyInstance = JsonConvert.DeserializeObject(json, property.PropertyType);
@@ -278,6 +286,15 @@ namespace Build1.UnityConfig.Repositories
                     property.SetValue(instance, value);
                 }
             }
+            
+            var method = instance.GetType().GetMethod("OnDeserialized", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (method == null)
+            {
+                var methods = instance.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance);
+                method = methods.FirstOrDefault(m => m.GetCustomAttribute<OnDeserializedAttribute>() != null);
+            }
+            
+            method?.Invoke(instance, new object[] { null });
 
             return instance;
         }
