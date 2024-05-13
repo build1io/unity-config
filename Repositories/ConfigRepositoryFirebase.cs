@@ -169,7 +169,7 @@ namespace Build1.UnityConfig.Repositories
                     {
                         parameters.Add(pair.Key, ParseAsString(value));
                     }
-                    else
+                    else if (value.Length > 0)
                     {
                         if (BooleanTruePattern.IsMatch(value))
                         {
