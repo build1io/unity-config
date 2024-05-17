@@ -136,7 +136,9 @@ namespace Build1.UnityConfig.Editor.Export
         private void OnReset()
         {
             ConfigAssetsPostProcessor.onAssetsPostProcessed -= OnReset;
-            _model.OnReset -= OnReset;
+            
+            if (_model != null)
+                _model.OnReset -= OnReset;
             
             Close();
         }
