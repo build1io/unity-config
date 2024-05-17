@@ -118,7 +118,7 @@ namespace Build1.UnityConfig.Editor.Json
         public static void Open(string title, string json)
         {
             EGUI.Window<JsonViewer>("Json Viewer", true)
-                .Size(800, 900)
+                .Size(900, 950)
                 .Get()
                 .Title(title)
                 .Json(json);

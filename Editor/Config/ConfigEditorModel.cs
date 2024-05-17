@@ -209,6 +209,7 @@ namespace Build1.UnityConfig.Editor.Config
             }
             catch (Exception exception)
             {
+                Debug.LogException(exception);
                 onError?.Invoke(exception.ToConfigException());
             }
         }
@@ -245,9 +246,9 @@ namespace Build1.UnityConfig.Editor.Config
                 return;
             }
 
-            ConfigProcessor.OnSaving(config);
-
             property.SetValue(config, SelectedConfigSection);
+            
+            ConfigProcessor.OnSaving(config);
 
             SelectedConfigSectionBackup = CloneSection(SelectedConfigSection);
 
@@ -273,7 +274,7 @@ namespace Build1.UnityConfig.Editor.Config
                    SelectedConfigSection.ToJson(false) != SelectedConfigSectionBackup.ToJson(false);
         }
 
-        private static ConfigNode GetSection(ConfigNode config, int index, out string name)
+        public static ConfigNode GetSection(ConfigNode config, int index, out string name)
         {
             var type = config.GetType();
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);

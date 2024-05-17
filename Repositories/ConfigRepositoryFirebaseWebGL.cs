@@ -1,4 +1,4 @@
-#if UNITY_WEBGL
+#if UNITY_WEBGL || UNITY_EDITOR
 
 using System;
 using Build1.UnityConfig.Repositories.WebGL;
@@ -9,8 +9,6 @@ namespace Build1.UnityConfig.Repositories
 {
     internal static class ConfigRepositoryFirebaseWebGL
     {
-        private const string ConfigField = "config";
-        
         private static FirebaseRemoteConfigAgent _agent;
         private static bool                      _fetched;
 
@@ -20,7 +18,7 @@ namespace Build1.UnityConfig.Repositories
             {
                 FetchAndActivate(() =>
                 {
-                    Get(ConfigField, value =>
+                    GetJson<T>(settings, value =>
                     {
                         var config = JsonConvert.DeserializeObject<T>((string)value);
                         onComplete?.Invoke(config);
@@ -61,25 +59,49 @@ namespace Build1.UnityConfig.Repositories
             _agent.FetchAndActivate();
         }
 
-        private static void Get(string field, Action<object> onComplete, Action<ConfigException> onError)
+        private static void GetJson<T>(ConfigSettings settings, Action<object> onComplete, Action<ConfigException> onError)
         {
-            void OnGet(object value)
+            switch (settings.Mode)
             {
-                _agent.OnGetSuccess -= OnGet;
+                case ConfigMode.Default:
+                    GetJsonDefault(settings, onComplete, onError);
+                    break;
+                case ConfigMode.Decomposed:
+                    GetJsonDecomposed<T>(settings, onComplete, onError);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static void GetJsonDefault(ConfigSettings settings, Action<object> onComplete, Action<ConfigException> onError)
+        {
+            void OnGetSuccess(object value)
+            {
+                _agent.OnGetSuccess -= OnGetSuccess;
                 _agent.OnGetFail -= OnGetFail;
                 onComplete?.Invoke(value);
             }
 
             void OnGetFail(FirebaseError error)
             {
-                _agent.OnGetSuccess -= OnGet;
+                _agent.OnGetSuccess -= OnGetSuccess;
                 _agent.OnGetFail -= OnGetFail;
                 onError?.Invoke(new ConfigException(ConfigError.Unknown));
             }
             
-            _agent.OnGetSuccess += OnGet;
+            _agent.OnGetSuccess += OnGetSuccess;
             _agent.OnGetFail += OnGetFail;
-            _agent.Get(field);
+            _agent.Get(settings.ParameterName);
+        }
+
+        private static void GetJsonDecomposed<T>(ConfigSettings settings, Action<object> onComplete, Action<ConfigException> onError)
+        {
+            // TODO: read json properties and types from provided config type
+            // TODO: request parameters one by one and assemble the composed objects
+            // TODO: serialise composed objects to json and pass it for final parsing
+            
+            throw new NotImplementedException();
         }
     }
 }
