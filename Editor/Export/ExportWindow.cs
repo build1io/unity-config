@@ -24,6 +24,12 @@ namespace Build1.UnityConfig.Editor.Export
             
         protected override void OnInitialize()
         {
+            if (_model == null)
+            {
+                Close();
+                return;
+            }
+            
             ConfigAssetsPostProcessor.onAssetsPostProcessed += OnReset;
             _model.OnReset += OnReset;
 
@@ -44,12 +50,6 @@ namespace Build1.UnityConfig.Editor.Export
         
         protected override void OnEGUI()
         {
-            if (_model == null)
-            {
-                Close();
-                return;
-            }
-
             EGUI.PropertyList<string>(_model, _model.SelectedConfigSections, nameof(_model.SelectedConfigSections))
                 .Title("Sections", EGUI.FontStyle(FontStyle.Bold))
                 .OnItemRender(renderer =>
