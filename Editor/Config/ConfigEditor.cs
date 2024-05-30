@@ -52,8 +52,8 @@ namespace Build1.UnityConfig.Editor.Config
 
         private void Reset()
         {
-            _stateDefault.Reset();
-            _stateConfigView.Reset();
+            _stateDefault?.Reset();
+            _stateConfigView?.Reset();
             
             EGUI.PropertyWindowCloseAll();
         }
