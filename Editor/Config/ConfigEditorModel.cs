@@ -59,6 +59,7 @@ namespace Build1.UnityConfig.Editor.Config
             SelectedConfig = null;
             
             UnityConfig.CurrentEditorConfig = null;
+            UnityConfig.CurrentEditorConfigSection = null;
 
             SelectedConfigSections = null;
             SelectedConfigSection = null;
@@ -225,6 +226,8 @@ namespace Build1.UnityConfig.Editor.Config
             SelectedConfigSectionBackup = GetSection(SelectedConfig, index, out var sectionName);
             SelectedConfigSection = CloneSection(SelectedConfigSectionBackup);
 
+            UnityConfig.CurrentEditorConfigSection = SelectedConfigSection;
+
             SelectedConfigSectionName = sectionName;
             SelectedConfigSectionIndex = index;
 
@@ -264,6 +267,8 @@ namespace Build1.UnityConfig.Editor.Config
         public void RevertSection()
         {
             SelectedConfigSection = CloneSection(SelectedConfigSectionBackup);
+            
+            UnityConfig.CurrentEditorConfigSection = SelectedConfigSection;
 
             OnSectionReverted?.Invoke();
         }
