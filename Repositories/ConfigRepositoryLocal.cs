@@ -15,8 +15,9 @@ namespace Build1.UnityConfig.Repositories
             {
                 json = Resources.Load<TextAsset>(fileName).text;
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.LogException(exception);
                 onError?.Invoke(new ConfigException(ConfigError.ConfigResourceNotFound));
                 return;
             }
@@ -25,8 +26,9 @@ namespace Build1.UnityConfig.Repositories
             {
                 config = JsonConvert.DeserializeObject<T>(json);
             }
-            catch
+            catch (Exception exception)
             {
+                Debug.LogException(exception);
                 onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}"));
                 return;
             }

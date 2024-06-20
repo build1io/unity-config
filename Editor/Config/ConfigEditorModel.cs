@@ -59,6 +59,7 @@ namespace Build1.UnityConfig.Editor.Config
             SelectedConfig = null;
             
             UnityConfig.CurrentEditorConfig = null;
+            UnityConfig.CurrentEditorConfigSection = null;
 
             SelectedConfigSections = null;
             SelectedConfigSection = null;
@@ -209,6 +210,7 @@ namespace Build1.UnityConfig.Editor.Config
             }
             catch (Exception exception)
             {
+                Debug.LogException(exception);
                 onError?.Invoke(exception.ToConfigException());
             }
         }
@@ -223,6 +225,8 @@ namespace Build1.UnityConfig.Editor.Config
 
             SelectedConfigSectionBackup = GetSection(SelectedConfig, index, out var sectionName);
             SelectedConfigSection = CloneSection(SelectedConfigSectionBackup);
+
+            UnityConfig.CurrentEditorConfigSection = SelectedConfigSection;
 
             SelectedConfigSectionName = sectionName;
             SelectedConfigSectionIndex = index;
@@ -245,9 +249,9 @@ namespace Build1.UnityConfig.Editor.Config
                 return;
             }
 
-            ConfigProcessor.OnSaving(config);
-
             property.SetValue(config, SelectedConfigSection);
+            
+            ConfigProcessor.OnSaving(config);
 
             SelectedConfigSectionBackup = CloneSection(SelectedConfigSection);
 
@@ -263,6 +267,8 @@ namespace Build1.UnityConfig.Editor.Config
         public void RevertSection()
         {
             SelectedConfigSection = CloneSection(SelectedConfigSectionBackup);
+            
+            UnityConfig.CurrentEditorConfigSection = SelectedConfigSection;
 
             OnSectionReverted?.Invoke();
         }
@@ -273,7 +279,7 @@ namespace Build1.UnityConfig.Editor.Config
                    SelectedConfigSection.ToJson(false) != SelectedConfigSectionBackup.ToJson(false);
         }
 
-        private static ConfigNode GetSection(ConfigNode config, int index, out string name)
+        public static ConfigNode GetSection(ConfigNode config, int index, out string name)
         {
             var type = config.GetType();
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);

@@ -19,8 +19,9 @@ namespace Build1.UnityConfig
 
         #if UNITY_EDITOR
 
-        internal static UnityConfig Instance            { get; private set; }
-        internal static ConfigNode  CurrentEditorConfig { get; set; }
+        internal static UnityConfig Instance                   { get; private set; }
+        internal static ConfigNode  CurrentEditorConfig        { get; set; }
+        internal static ConfigNode  CurrentEditorConfigSection { get; set; }
 
         public static event Action<ConfigNode> OnConfigSaving;
         public static event Action<ConfigNode> OnConfigSaved;
@@ -126,7 +127,12 @@ namespace Build1.UnityConfig
         {
             return (T)CurrentEditorConfig;
         }
-
+        
+        public static T GetCurrentEditorConfigSection<T>() where T : ConfigNode
+        {
+            return (T)CurrentEditorConfigSection;
+        }
+        
         #endif
 
         private static void LoadConfigRuntime<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
