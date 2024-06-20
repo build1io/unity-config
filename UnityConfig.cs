@@ -14,7 +14,8 @@ namespace Build1.UnityConfig
 {
     public sealed class UnityConfig
     {
-        public static bool FallbackUsed { get; private set; }
+        public static WebGLJavaScriptBridgeMode WebGLJavaScriptBridgeMode { get; set; } = WebGLJavaScriptBridgeMode.Namespaced;
+        public static bool                      FallbackUsed              { get; private set; }
 
         #if UNITY_EDITOR
 
@@ -147,22 +148,22 @@ namespace Build1.UnityConfig
                         onError?.Invoke(exception);
                     }
                 }
-                
+
                 #if UNITY_WEBGL && !UNITY_EDITOR
                 
                 ConfigRepositoryFirebaseWebGL.Load(settings, onComplete, onErrorInner);
-                
+
                 #else
                 
                 ConfigRepositoryFirebase.Load(settings, onComplete, onErrorInner);
                 
                 #endif
-                
+
                 #else
                 
                 Debug.LogError("Remote Config loading from Firebase is unavailable. Probably you need to add Firebase Remote Config package into the project.");
                 onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
-
+                
                 #endif
             }
             else

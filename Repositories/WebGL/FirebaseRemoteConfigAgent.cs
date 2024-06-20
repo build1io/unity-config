@@ -18,13 +18,13 @@ namespace Build1.UnityConfig.Repositories.WebGL
         public event Action<FirebaseError> OnGetFail;
 
         [DllImport("__Internal")]
-        public static extern void InitializeRemoteConfig(bool debug, int fallbackTimeout, string objectName, string OnSuccess);
+        public static extern void InitializeRemoteConfig(string modular, string debug, int fallbackTimeout, string objectName, string OnSuccess);
 
         [DllImport("__Internal")]
-        public static extern void FetchAndActivateRemoteConfig(string objectName, string OnSuccess, string onFail);
+        public static extern void FetchAndActivateRemoteConfig(string modular, string objectName, string OnSuccess, string onFail);
 
         [DllImport("__Internal")]
-        public static extern void GetFromRemoteConfig(string field, string objectName, string OnSuccess, string onFail);
+        public static extern void GetFromRemoteConfig(string modular, string field, string objectName, string OnSuccess, string onFail);
 
         /*
          * Initialize.
@@ -32,7 +32,7 @@ namespace Build1.UnityConfig.Repositories.WebGL
 
         public void Initialize(bool debug, int fallbackTimeout)
         {
-            InitializeRemoteConfig(debug, fallbackTimeout, gameObject.name, nameof(OnInitializedHandler));
+            InitializeRemoteConfig(GetIsModularMode(), debug.ToString(), fallbackTimeout, gameObject.name, nameof(OnInitializedHandler));
         }
 
         public void OnInitializedHandler()
@@ -46,7 +46,7 @@ namespace Build1.UnityConfig.Repositories.WebGL
 
         public void FetchAndActivate()
         {
-            FetchAndActivateRemoteConfig(gameObject.name, nameof(OnFetchSuccess), nameof(OnFetchFail));
+            FetchAndActivateRemoteConfig(GetIsModularMode(), gameObject.name, nameof(OnFetchSuccess), nameof(OnFetchFail));
         }
 
         public void OnFetchSuccess()
@@ -66,7 +66,7 @@ namespace Build1.UnityConfig.Repositories.WebGL
 
         public void Get(string field)
         {
-            GetFromRemoteConfig(field, gameObject.name, nameof(OnGetSuccessHandler), nameof(OnGetFailHandler));
+            GetFromRemoteConfig(GetIsModularMode(), field, gameObject.name, nameof(OnGetSuccessHandler), nameof(OnGetFailHandler));
         }
 
         public void OnGetSuccessHandler(object value)
@@ -78,6 +78,20 @@ namespace Build1.UnityConfig.Repositories.WebGL
         {
             var error = JsonConvert.DeserializeObject<FirebaseError>(payload);
             OnGetFail?.Invoke(error);
+        }
+        
+        /*
+         * Private.
+         */
+
+        private string GetIsModularMode()
+        {
+            return UnityConfig.WebGLJavaScriptBridgeMode switch
+            {
+                WebGLJavaScriptBridgeMode.Namespaced => bool.FalseString,
+                WebGLJavaScriptBridgeMode.Modular    => bool.TrueString,
+                _                                    => throw new ArgumentOutOfRangeException()
+            };
         }
     }
 }
