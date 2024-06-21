@@ -185,7 +185,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             EGUI.Space();
 
             if (configMetadataClicked)
-                MetadataWindow.Open(model.SelectedConfig);
+                MetadataWindow.Open(model.SelectedConfig, model);
 
             if (configViewClicked)
                 JsonViewer.Open(model.SelectedConfigName, model.SelectedConfig.ToJson(false));
@@ -225,7 +225,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             }
 
             if (sectionMetadataClicked)
-                MetadataWindow.Open(model.SelectedConfigSection);
+                MetadataWindow.Open(model.SelectedConfigSection, model);
             
             if (sectionRevertClicked)
                 model.RevertSection();

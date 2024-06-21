@@ -10,7 +10,8 @@ namespace Build1.UnityConfig
         [JsonProperty("n")] public string Note                { get; private set; }
         [JsonProperty("c")] public string LastChangeAuthor    { get; private set; }
         [JsonProperty("t")] public long   LastChangeTimestamp { get; private set; }
-        
+        [JsonProperty("d")] public bool   Disabled            { get; private set; }
+
         [JsonIgnore] public DateTime LastChangeDate { get; private set; }
 
         internal ConfigNodeMetadata() { }
@@ -18,7 +19,7 @@ namespace Build1.UnityConfig
         /*
          * Public.
          */
-        
+
         internal void Update()
         {
             LastChangeAuthor = Environment.UserName;

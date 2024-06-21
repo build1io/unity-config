@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 
 using System.Collections.Generic;
+using System.Net;
 using System.Reflection;
 using Build1.UnityConfig.Editor.Config;
 using Build1.UnityConfig.Editor.Json;
@@ -42,13 +43,13 @@ namespace Build1.UnityConfig.Editor.Export
             {
                 if (property.Name == "Metadata")
                     continue;
-                
-                var jsonAttr = property.GetCustomAttribute<JsonPropertyAttribute>();
-                if (jsonAttr != null)
-                    jsonPropertyNames.Add(property.Name, jsonAttr.PropertyName);
 
                 var section = ConfigEditorModel.GetSection(_model.SelectedConfig, property.Name);
                 metadata[property.Name] = section.Metadata;
+
+                var jsonAttr = property.GetCustomAttribute<JsonPropertyAttribute>();
+                if (jsonAttr != null)
+                    jsonPropertyNames.Add(property.Name, jsonAttr.PropertyName);
             }
 
             _jsonPropertyNames = jsonPropertyNames;
@@ -61,42 +62,45 @@ namespace Build1.UnityConfig.Editor.Export
                 .Title("Sections", EGUI.FontStyle(FontStyle.Bold))
                 .OnItemRender(renderer =>
                  {
-                     EGUI.Horizontally(() =>
+                     var metadata = _metadata[renderer.Item];
+                     var jsonPropertyName = _jsonPropertyNames[renderer.Item];
+
+                     EGUI.Enabled(metadata is not { Disabled: true }, () =>
                      {
-                         var jsonPropertyName = _jsonPropertyNames[renderer.Item];
-                         var metadata = _metadata[renderer.Item];
-
-                         if (metadata != null && !string.IsNullOrWhiteSpace(metadata.Note))
-                             EGUI.Label($"{renderer.Item} ({metadata.Note})", EGUI.Size(180, EGUI.ButtonHeight02));
-                         else
-                             EGUI.Label(renderer.Item, EGUI.Size(180, EGUI.ButtonHeight02));
-
-                         EGUI.Label($"[\"{jsonPropertyName}\"]", EGUI.Height(EGUI.ButtonHeight02));
-
-                         EGUI.Space();
-
-                         EGUI.Button("Copy Comp.", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
+                         EGUI.Horizontally(() =>
                          {
-                             var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
-                             EGUI.CopyToClipboard(section.ToJson(false).Compress());
-                         });
+                             if (metadata != null && !string.IsNullOrWhiteSpace(metadata.Note))
+                                 EGUI.Label($"{renderer.Item} ({metadata.Note})", EGUI.Size(220, EGUI.ButtonHeight02));
+                             else
+                                 EGUI.Label(renderer.Item, EGUI.Size(220, EGUI.ButtonHeight02));
 
-                         EGUI.Button("Copy Min.", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
-                         {
-                             var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
-                             EGUI.CopyToClipboard(section.ToJson(false));
-                         });
+                             EGUI.Label($"[\"{jsonPropertyName}\"]", EGUI.Height(EGUI.ButtonHeight02));
 
-                         EGUI.Button("Copy", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
-                         {
-                             var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
-                             EGUI.CopyToClipboard(section.ToJson(true));
-                         });
+                             EGUI.Space();
 
-                         EGUI.Button("View", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
-                         {
-                             var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out var name);
-                             JsonViewer.Open(name, section.ToJson(false));
+                             EGUI.Button("Copy Comp.", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
+                             {
+                                 var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
+                                 EGUI.CopyToClipboard(section.ToJson(false).Compress());
+                             });
+
+                             EGUI.Button("Copy Min.", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
+                             {
+                                 var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
+                                 EGUI.CopyToClipboard(section.ToJson(false));
+                             });
+
+                             EGUI.Button("Copy", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
+                             {
+                                 var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
+                                 EGUI.CopyToClipboard(section.ToJson(true));
+                             });
+
+                             EGUI.Button("View", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
+                             {
+                                 var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out var name);
+                                 JsonViewer.Open(name, section.ToJson(false));
+                             });
                          });
                      });
                  })
@@ -104,7 +108,7 @@ namespace Build1.UnityConfig.Editor.Export
                 .NoPanel()
                 .ReadOnly()
                 .Build();
-
+            
             EGUI.Space();
 
             EGUI.Label("Complete Config", EGUI.FontStyle(FontStyle.Bold));
