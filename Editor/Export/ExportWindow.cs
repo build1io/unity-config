@@ -15,13 +15,14 @@ namespace Build1.UnityConfig.Editor.Export
 {
     internal sealed class ExportWindow : EGUIWindow
     {
-        private ConfigEditorModel          _model;
-        private Dictionary<string, string> _jsonPropertyNames;
+        private ConfigEditorModel                      _model;
+        private Dictionary<string, ConfigNodeMetadata> _metadata;
+        private Dictionary<string, string>             _jsonPropertyNames;
 
         /*
          * Protected.
          */
-            
+
         protected override void OnInitialize()
         {
             if (_model == null)
@@ -29,25 +30,31 @@ namespace Build1.UnityConfig.Editor.Export
                 Close();
                 return;
             }
-            
+
             ConfigAssetsPostProcessor.onAssetsPostProcessed += OnReset;
             _model.OnReset += OnReset;
 
-            _jsonPropertyNames = new Dictionary<string, string>();
-            
             var properties = _model.SelectedConfig.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var jsonPropertyNames = new Dictionary<string, string>(properties.Length);
-            
+            var metadata = new Dictionary<string, ConfigNodeMetadata>(properties.Length);
+
             foreach (var property in properties)
             {
+                if (property.Name == "Metadata")
+                    continue;
+                
                 var jsonAttr = property.GetCustomAttribute<JsonPropertyAttribute>();
                 if (jsonAttr != null)
                     jsonPropertyNames.Add(property.Name, jsonAttr.PropertyName);
+
+                var section = ConfigEditorModel.GetSection(_model.SelectedConfig, property.Name);
+                metadata[property.Name] = section.Metadata;
             }
 
             _jsonPropertyNames = jsonPropertyNames;
+            _metadata = metadata;
         }
-        
+
         protected override void OnEGUI()
         {
             EGUI.PropertyList<string>(_model, _model.SelectedConfigSections, nameof(_model.SelectedConfigSections))
@@ -57,76 +64,66 @@ namespace Build1.UnityConfig.Editor.Export
                      EGUI.Horizontally(() =>
                      {
                          var jsonPropertyName = _jsonPropertyNames[renderer.Item];
-                         
-                         EGUI.Label(renderer.Item, EGUI.Size(140, EGUI.ButtonHeight02));
+                         var metadata = _metadata[renderer.Item];
+
+                         if (metadata != null && !string.IsNullOrWhiteSpace(metadata.Note))
+                             EGUI.Label($"{renderer.Item} ({metadata.Note})", EGUI.Size(180, EGUI.ButtonHeight02));
+                         else
+                             EGUI.Label(renderer.Item, EGUI.Size(180, EGUI.ButtonHeight02));
+
                          EGUI.Label($"[\"{jsonPropertyName}\"]", EGUI.Height(EGUI.ButtonHeight02));
+
                          EGUI.Space();
-                         
+
                          EGUI.Button("Copy Comp.", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
                          {
                              var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
                              EGUI.CopyToClipboard(section.ToJson(false).Compress());
                          });
-                         
+
                          EGUI.Button("Copy Min.", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
                          {
                              var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
                              EGUI.CopyToClipboard(section.ToJson(false));
                          });
-                         
+
                          EGUI.Button("Copy", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
                          {
                              var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out _);
                              EGUI.CopyToClipboard(section.ToJson(true));
                          });
-                         
+
                          EGUI.Button("View", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
                          {
                              var section = ConfigEditorModel.GetSection(_model.SelectedConfig, _model.SelectedConfigSections.IndexOf(renderer.Item), out var name);
                              JsonViewer.Open(name, section.ToJson(false));
                          });
-                     });    
+                     });
                  })
                 .OnItemAddAvailable(() => false)
                 .NoPanel()
                 .ReadOnly()
                 .Build();
-            
+
             EGUI.Space();
-                
+
             EGUI.Label("Complete Config", EGUI.FontStyle(FontStyle.Bold));
             EGUI.Space(3);
-            
+
             EGUI.Horizontally(() =>
             {
-                EGUI.Button("Copy Json Comp.", EGUI.Height(EGUI.ButtonHeight01)).OnClick(() =>
-                {
-                    EGUI.CopyToClipboard(_model.SelectedConfig.ToJson(false).Compress());
-                });
-                         
-                EGUI.Button("Copy Json Min.", EGUI.Height(EGUI.ButtonHeight01)).OnClick(() =>
-                {
-                    EGUI.CopyToClipboard(_model.SelectedConfig.ToJson(false));
-                });
-                         
-                EGUI.Button("Copy Json", EGUI.Height(EGUI.ButtonHeight01)).OnClick(() =>
-                {
-                    EGUI.CopyToClipboard(_model.SelectedConfig.ToJson(true));
-                });
-                         
-                EGUI.Button("View Json", EGUI.Height(EGUI.ButtonHeight01)).OnClick(() =>
-                {
-                    JsonViewer.Open(_model.SelectedConfigName, _model.SelectedConfig.ToJson(false));             
-                });
-                
+                EGUI.Button("Copy Json Comp.", EGUI.Height(EGUI.ButtonHeight01)).OnClick(() => { EGUI.CopyToClipboard(_model.SelectedConfig.ToJson(false).Compress()); });
+                EGUI.Button("Copy Json Min.", EGUI.Height(EGUI.ButtonHeight01)).OnClick(() => { EGUI.CopyToClipboard(_model.SelectedConfig.ToJson(false)); });
+                EGUI.Button("Copy Json", EGUI.Height(EGUI.ButtonHeight01)).OnClick(() => { EGUI.CopyToClipboard(_model.SelectedConfig.ToJson(true)); });
+                EGUI.Button("View Json", EGUI.Height(EGUI.ButtonHeight01)).OnClick(() => { JsonViewer.Open(_model.SelectedConfigName, _model.SelectedConfig.ToJson(false)); });
                 EGUI.Button("Close", EGUI.Size(120, EGUI.ButtonHeight01)).OnClick(Close);
             });
         }
-        
+
         /*
          * Private.
          */
-        
+
         private ExportWindow SetConfig(ConfigEditorModel model)
         {
             _model = model;
@@ -136,13 +133,13 @@ namespace Build1.UnityConfig.Editor.Export
         private void OnReset()
         {
             ConfigAssetsPostProcessor.onAssetsPostProcessed -= OnReset;
-            
+
             if (_model != null)
                 _model.OnReset -= OnReset;
-            
+
             Close();
         }
-        
+
         /*
          * Static.
          */
@@ -153,7 +150,7 @@ namespace Build1.UnityConfig.Editor.Export
 
             var sectionsCount = model.SelectedConfigSections.Count;
             var windowHeight = sectionsCount * itemHeight + 150;
-            
+
             EGUI.Window<ExportWindow>("Config Export", true)
                 .Size(850, windowHeight)
                 .Get()

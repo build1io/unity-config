@@ -11,13 +11,26 @@ namespace Build1.UnityConfig
             DefaultValueHandling = DefaultValueHandling.Ignore
         };
         
+        [JsonProperty("_m")] public ConfigNodeMetadata Metadata { get; private set; }
+
+        internal void UpdateMetadata()
+        {
+            Metadata ??= new ConfigNodeMetadata();
+            Metadata.Update();
+        }
+
+        internal void ClearMetadata()
+        {
+            Metadata = null;
+        }
+
         public string ToJson(bool indented)
         {
             if (indented)
                 return JsonConvert.SerializeObject(this, Formatting.Indented, Settings);
             return JsonConvert.SerializeObject(this, Settings);
         }
-
+        
         /*
          * Static.
          */

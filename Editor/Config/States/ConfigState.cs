@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Build1.UnityConfig.Editor.Export;
 using Build1.UnityConfig.Editor.Json;
+using Build1.UnityConfig.Editor.Metadata;
 using Build1.UnityConfig.Utils;
 using Build1.UnityEGUI;
 using Build1.UnityEGUI.Components.Label;
@@ -49,16 +50,26 @@ namespace Build1.UnityConfig.Editor.Config.States
             var configCopyMinClicked = false;
             var configCompressedCopyClicked = false;
             var exportClicked = false;
+            var configMetadataClicked = false;
 
             var sectionSaveClicked = false;
             var sectionRevertClicked = false;
             var sectionViewClicked = false;
+            var sectionMetadataClicked = false;
 
             EGUI.Line(Color.gray);
             EGUI.Space(2);
             EGUI.Horizontally(() =>
             {
-                EGUI.Title(model.SelectedConfigName, TitleType.H3, EGUI.OffsetX(5), EGUI.StretchedWidth(), EGUI.StretchedHeight(), EGUI.TextAnchor(TextAnchor.MiddleLeft));
+                EGUI.Title(model.SelectedConfigName, TitleType.H3, EGUI.OffsetX(5), EGUI.OffsetY(2), EGUI.StretchedHeight(), EGUI.TextAnchor(TextAnchor.MiddleLeft));
+
+                if (model.Settings.Mode == ConfigMode.Default)
+                {
+                    EGUI.Space(10);
+                    EGUI.Button("...", EGUI.Size(EGUI.DropDownHeight01, EGUI.DropDownHeight01)).Clicked(out configMetadataClicked);
+                }
+
+                EGUI.Space();
 
                 switch (model.Settings.Mode)
                 {
@@ -106,7 +117,16 @@ namespace Build1.UnityConfig.Editor.Config.States
 
             EGUI.Horizontally(() =>
             {
-                EGUI.DropDown(configSections, model.SelectedConfigSectionIndex, EGUI.DropDownHeight01, newIndex =>
+                var sectionsToShow = configSections;
+                if (canBeSaved && modified)
+                {
+                    sectionsToShow = new List<string>(configSections)
+                    {
+                        [model.SelectedConfigSectionIndex] = configSections[model.SelectedConfigSectionIndex] + "*"
+                    };
+                }
+                
+                EGUI.DropDown(sectionsToShow, model.SelectedConfigSectionIndex, EGUI.DropDownHeight01, newIndex =>
                 {
                     var select = true;
                     
@@ -117,6 +137,9 @@ namespace Build1.UnityConfig.Editor.Config.States
                         model.SelectSection(newIndex);
                 });
 
+                if (model.Settings.Mode == ConfigMode.Decomposed)
+                    EGUI.Button("...", EGUI.Size(EGUI.DropDownHeight01, EGUI.DropDownHeight01)).Clicked(out sectionMetadataClicked);
+                
                 EGUI.Enabled(canBeSaved && modified, () =>
                 {
                     EGUI.Button("Save", EGUI.Size(130, EGUI.DropDownHeight01))
@@ -145,14 +168,8 @@ namespace Build1.UnityConfig.Editor.Config.States
 
             EGUI.Space(10);
 
-            var sectionName = model.SelectedConfigSectionName;
-            if (canBeSaved && modified)
-                sectionName += "*";
-
             var section = GetSection(model.SelectedConfigSectionName);
 
-            EGUI.Title(sectionName, TitleType.H3, EGUI.OffsetX(5), EGUI.StretchedWidth(), EGUI.TextAnchor(TextAnchor.MiddleLeft));
-            EGUI.Space(10);
             EGUI.Scroll(ref _scrollPosition, () =>
             {
                 if (section == null)
@@ -166,6 +183,9 @@ namespace Build1.UnityConfig.Editor.Config.States
             });
 
             EGUI.Space();
+
+            if (configMetadataClicked)
+                MetadataWindow.Open(model.SelectedConfig);
 
             if (configViewClicked)
                 JsonViewer.Open(model.SelectedConfigName, model.SelectedConfig.ToJson(false));
@@ -204,6 +224,9 @@ namespace Build1.UnityConfig.Editor.Config.States
                 }
             }
 
+            if (sectionMetadataClicked)
+                MetadataWindow.Open(model.SelectedConfigSection);
+            
             if (sectionRevertClicked)
                 model.RevertSection();
 

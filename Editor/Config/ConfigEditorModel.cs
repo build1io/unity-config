@@ -169,7 +169,7 @@ namespace Build1.UnityConfig.Editor.Config
         {
             var type = config.GetType();
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            return properties.Select(p => p.Name).ToList();
+            return properties.Select(p => p.Name).Where(n => n != "Metadata").ToList();
         }
 
         /*
@@ -249,6 +249,26 @@ namespace Build1.UnityConfig.Editor.Config
                 return;
             }
 
+            switch (Settings.Mode)
+            {
+                case ConfigMode.Default:
+                    
+                    config.UpdateMetadata();
+
+                    // When saving in default mode we need to get rid of metadatas from all sections.
+                    foreach (var section in SelectedConfigSections)
+                        GetSection(config, section).ClearMetadata();
+                    
+                    break;
+                
+                case ConfigMode.Decomposed:
+                    config.ClearMetadata();
+                    SelectedConfigSection.UpdateMetadata();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            
             property.SetValue(config, SelectedConfigSection);
             
             ConfigProcessor.OnSaving(config);
@@ -277,6 +297,14 @@ namespace Build1.UnityConfig.Editor.Config
         {
             return SelectedConfigSection != null &&
                    SelectedConfigSection.ToJson(false) != SelectedConfigSectionBackup.ToJson(false);
+        }
+        
+        public static ConfigNode GetSection(ConfigNode config, string name)
+        {
+            var type = config.GetType();
+            var property = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).First(p => p.Name == name);
+            var sectionRaw = property.GetValue(config) ?? Activator.CreateInstance(property.PropertyType);
+            return (ConfigNode)sectionRaw;
         }
 
         public static ConfigNode GetSection(ConfigNode config, int index, out string name)
