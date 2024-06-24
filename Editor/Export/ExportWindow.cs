@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 
 using System.Collections.Generic;
-using System.Net;
 using System.Reflection;
 using Build1.UnityConfig.Editor.Config;
 using Build1.UnityConfig.Editor.Json;
@@ -16,6 +15,8 @@ namespace Build1.UnityConfig.Editor.Export
 {
     internal sealed class ExportWindow : EGUIWindow
     {
+        protected override bool Initialized => _model != null;
+        
         private ConfigEditorModel                      _model;
         private Dictionary<string, ConfigNodeMetadata> _metadata;
         private Dictionary<string, string>             _jsonPropertyNames;
@@ -26,12 +27,6 @@ namespace Build1.UnityConfig.Editor.Export
 
         protected override void OnInitialize()
         {
-            if (_model == null)
-            {
-                Close();
-                return;
-            }
-
             ConfigAssetsPostProcessor.onAssetsPostProcessed += OnReset;
             _model.OnReset += OnReset;
 

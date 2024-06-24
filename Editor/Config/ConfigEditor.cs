@@ -11,6 +11,8 @@ namespace Build1.UnityConfig.Editor.Config
 {
     internal sealed class ConfigEditor : EGUIWindow
     {
+        protected override bool Initialized => _model != null;
+        
         private ConfigEditorModel _model;
         private ConfigEditorState _stateDefault;
         private ConfigEditorState _stateConfigView;
