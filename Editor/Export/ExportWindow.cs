@@ -15,7 +15,7 @@ namespace Build1.UnityConfig.Editor.Export
 {
     internal sealed class ExportWindow : EGUIWindow
     {
-        protected override bool Initialized => _model != null;
+        protected override bool Initialized => _model != null && _metadata != null;
         
         private ConfigEditorModel                      _model;
         private Dictionary<string, ConfigNodeMetadata> _metadata;
