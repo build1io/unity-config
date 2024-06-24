@@ -2,13 +2,15 @@ using System;
 using System.Runtime.Serialization;
 using Build1.UnityConfig.Utils;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace Build1.UnityConfig
 {
     public sealed class ConfigNodeMetadata
     {
+        [JsonProperty("a")] public string AppVersion          { get; private set; }
         [JsonProperty("n")] public string Note                { get; private set; }
-        [JsonProperty("c")] public string LastChangeAuthor    { get; private set; }
+        [JsonProperty("c")] public string LastChangedBy       { get; private set; }
         [JsonProperty("t")] public long   LastChangeTimestamp { get; private set; }
         [JsonProperty("d")] public bool   Disabled            { get; private set; }
 
@@ -22,7 +24,8 @@ namespace Build1.UnityConfig
 
         internal void Update()
         {
-            LastChangeAuthor = Environment.UserName;
+            AppVersion = Application.version;
+            LastChangedBy = Environment.UserName;
             LastChangeDate = DateTime.UtcNow;
             LastChangeTimestamp = LastChangeDate.ToUnixTimestamp();
         }

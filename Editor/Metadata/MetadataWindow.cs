@@ -31,26 +31,29 @@ namespace Build1.UnityConfig.Editor.Metadata
         protected override void OnEGUI()
         {
             var dto = _data;
+
+            EGUI.Enabled(false, () =>
+            {
+                EGUI.Property(dto, dto.AppVersion, nameof(dto.AppVersion));    
+            });
             
             EGUI.Property(dto, dto.Note, nameof(dto.Note));
 
             EGUI.Enabled(false, () =>
             {
-                EGUI.Property(dto, dto.LastChangeAuthor, nameof(dto.LastChangeAuthor));
+                EGUI.Property(dto, dto.LastChangedBy, nameof(dto.LastChangedBy));
 
                 EGUI.Horizontally(() =>
                 {
-                    EGUI.Label("Last Change:", EGUI.Width(EGUI.PropertyLabelWidth));
+                    EGUI.Label("Last Changed On:", EGUI.Width(EGUI.PropertyLabelWidth));
                     EGUI.TextField(dto.LastChangeDate.ToString(CultureInfo.InvariantCulture));
                 });
             });
 
             if (_model.Settings.Mode == ConfigMode.Decomposed)
             {
-                EGUI.Space(20);
-            
                 EGUI.Property(dto, dto.Disabled, nameof(dto.Disabled));
-                EGUI.MessageBox("Disabling allows to hide this section from editor config. This is useful for multiple A/B/C tests config storing.", MessageType.Info);    
+                EGUI.MessageBox("Disabling allows to hide this section from exporting. This is useful for multiple config storing and management.", MessageType.Info);    
             }
         }
 
