@@ -16,7 +16,7 @@ namespace Build1.UnityConfig.Editor.Export
     internal sealed class ExportWindow : EGUIWindow
     {
         protected override bool Initialized => _model != null && _metadata != null;
-        
+
         private ConfigEditorModel                      _model;
         private Dictionary<string, ConfigNodeMetadata> _metadata;
         private Dictionary<string, string>             _jsonPropertyNames;
@@ -64,14 +64,10 @@ namespace Build1.UnityConfig.Editor.Export
                      {
                          EGUI.Horizontally(() =>
                          {
-                             if (metadata != null && !string.IsNullOrWhiteSpace(metadata.Note))
-                                 EGUI.Label($"{renderer.Item} ({metadata.Note})", EGUI.Size(220, EGUI.ButtonHeight02));
-                             else
-                                 EGUI.Label(renderer.Item, EGUI.Size(220, EGUI.ButtonHeight02));
-
-                             EGUI.Label($"[\"{jsonPropertyName}\"]", EGUI.Height(EGUI.ButtonHeight02));
-
-                             EGUI.Space();
+                             EGUI.Label(renderer.Item, EGUI.Size(80, EGUI.ButtonHeight02));
+                             EGUI.Label($"[\"{jsonPropertyName}\"]", EGUI.Height(EGUI.ButtonHeight02), EGUI.StretchedWidth(), EGUI.TextAnchor(TextAnchor.MiddleCenter));
+                             EGUI.Label(metadata != null ? metadata.Note : string.Empty, EGUI.Size(100, EGUI.ButtonHeight02));
+                             EGUI.Label(metadata != null ? metadata.AppVersion : string.Empty, EGUI.Size(50, EGUI.ButtonHeight02), EGUI.TextAnchor(TextAnchor.MiddleCenter));
 
                              EGUI.Button("Copy Comp.", EGUI.Size(100, EGUI.ButtonHeight02)).OnClick(() =>
                              {
@@ -103,7 +99,7 @@ namespace Build1.UnityConfig.Editor.Export
                 .NoPanel()
                 .ReadOnly()
                 .Build();
-            
+
             EGUI.Space();
 
             EGUI.Label("Complete Config", EGUI.FontStyle(FontStyle.Bold));
