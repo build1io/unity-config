@@ -5,6 +5,7 @@ using Build1.UnityConfig.Editor.Config;
 using Build1.UnityEGUI;
 using Build1.UnityEGUI.Window;
 using UnityEditor;
+using UnityEngine;
 
 namespace Build1.UnityConfig.Editor.Metadata
 {
@@ -34,7 +35,15 @@ namespace Build1.UnityConfig.Editor.Metadata
 
             EGUI.Enabled(false, () =>
             {
-                EGUI.Property(dto, dto.AppVersion, nameof(dto.AppVersion));    
+                EGUI.Horizontally(() =>
+                {
+                    EGUI.Property(dto, dto.AppVersion, nameof(dto.AppVersion));
+                    
+                    EGUI.Enabled(dto.AppVersion != Application.version, () =>
+                    {
+                        EGUI.Button("Update").OnClick(dto.Update);
+                    });
+                });
             });
             
             EGUI.Property(dto, dto.Note, nameof(dto.Note));
