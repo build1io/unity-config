@@ -55,7 +55,11 @@ namespace Build1.UnityConfig.Repositories
                 _fetched = true;
                 onComplete?.Invoke();
             };
-            _agent.OnFetchAndActivateFail += _ => { onError?.Invoke(new ConfigException(ConfigError.Unknown)); };
+            _agent.OnFetchAndActivateFail += _ =>
+            {
+                // TODO: Handle errors properly
+                onError?.Invoke(new ConfigException(ConfigError.Unknown, "Unknown", null));
+            };
             _agent.FetchAndActivate();
         }
 
@@ -87,7 +91,9 @@ namespace Build1.UnityConfig.Repositories
             {
                 _agent.OnGetSuccess -= OnGetSuccess;
                 _agent.OnGetFail -= OnGetFail;
-                onError?.Invoke(new ConfigException(ConfigError.Unknown));
+                
+                // TODO: Handle errors properly
+                onError?.Invoke(new ConfigException(ConfigError.Unknown, "Unknown", null));
             }
             
             _agent.OnGetSuccess += OnGetSuccess;

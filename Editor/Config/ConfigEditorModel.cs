@@ -201,18 +201,35 @@ namespace Build1.UnityConfig.Editor.Config
 
         private static void LoadLocalConfig(string configName, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
+            var path = ConfigProcessor.GetEditorConfigFilePath(configName);
+            
+            string json;
+            
             try
             {
-                var path = ConfigProcessor.GetEditorConfigFilePath(configName);
-                var json = File.ReadAllText(path);
-                var config = (ConfigNode)JsonConvert.DeserializeObject(json, UnityConfig.Instance.ConfigType);
-                onComplete?.Invoke(config);
+                json = File.ReadAllText(path);
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception);
-                onError?.Invoke(exception.ToConfigException());
+                onError?.Invoke(new ConfigException(ConfigError.ConfigResourceNotFound, $"Path: {path}", exception));
+                return;
             }
+            
+            ConfigNode config;
+            
+            try
+            {
+                config = (ConfigNode)JsonConvert.DeserializeObject(json, UnityConfig.Instance.ConfigType);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+                onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}", exception));
+                return;
+            }
+            
+            onComplete?.Invoke(config);
         }
 
         /*

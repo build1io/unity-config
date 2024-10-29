@@ -144,7 +144,7 @@ namespace Build1.UnityConfig
 
                 void onErrorInner(ConfigException exception)
                 {
-                    if (exception.error == ConfigError.NetworkError && settings.FallbackEnabled)
+                    if (settings.FallbackEnabled && exception.error is ConfigError.NetworkError or ConfigError.ParsingError)
                     {
                         FallbackUsed = true;
                         ConfigRepositoryLocal.Load("config_fallback", onComplete, onError);

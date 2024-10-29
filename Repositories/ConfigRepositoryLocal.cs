@@ -18,7 +18,7 @@ namespace Build1.UnityConfig.Repositories
             catch (Exception exception)
             {
                 Debug.LogException(exception);
-                onError?.Invoke(new ConfigException(ConfigError.ConfigResourceNotFound));
+                onError?.Invoke(new ConfigException(ConfigError.ConfigResourceNotFound, $"FileName: {fileName}", exception));
                 return;
             }
             
@@ -29,7 +29,7 @@ namespace Build1.UnityConfig.Repositories
             catch (Exception exception)
             {
                 Debug.LogException(exception);
-                onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}"));
+                onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}", exception));
                 return;
             }
 

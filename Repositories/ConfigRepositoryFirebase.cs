@@ -30,80 +30,66 @@ namespace Build1.UnityConfig.Repositories
         }
 
         /*
-         * Private.
+         * Settings.
          */
 
         private static void SetConfigSettings(ConfigSettings settings, Action onComplete, Action<ConfigException> onError)
         {
-            try
-            {
-                var configSettings = new global::Firebase.RemoteConfig.ConfigSettings();
+            var configSettings = new global::Firebase.RemoteConfig.ConfigSettings();
 
-                if (settings is { FallbackEnabled: true, FallbackTimeout: > 0 })
-                    configSettings.FetchTimeoutInMilliseconds = (ulong)settings.FallbackTimeout;
+            if (settings is { FallbackEnabled: true, FallbackTimeout: > 0 })
+                configSettings.FetchTimeoutInMilliseconds = (ulong)settings.FallbackTimeout;
 
-                if (Debug.isDebugBuild)
-                    configSettings.MinimumFetchInternalInMilliseconds = 0; // Refresh immediately when debugging.
+            if (Debug.isDebugBuild)
+                configSettings.MinimumFetchIntervalInMilliseconds = 0; // Refresh immediately when debugging.
 
-                FirebaseRemoteConfig.DefaultInstance
-                                    .SetConfigSettingsAsync(configSettings)
-                                    .ContinueWithOnMainThread(settingsTask =>
+            FirebaseRemoteConfig.DefaultInstance
+                                .SetConfigSettingsAsync(configSettings)
+                                .ContinueWithOnMainThread(settingsTask =>
+                                 {
+                                     if (settingsTask.IsFaulted)
                                      {
-                                         if (settingsTask.IsFaulted)
-                                         {
-                                             onError?.Invoke(settingsTask.Exception.ToConfigException());
-                                             return;
-                                         }
+                                         onError?.Invoke(ConfigException.FromFirebaseException(settingsTask.Exception));
+                                         return;
+                                     }
 
-                                         onComplete?.Invoke();
-                                     });
-            }
-            catch (Exception exception)
-            {
-                onError?.Invoke(exception.ToConfigException());
-            }
+                                     onComplete?.Invoke();
+                                 });
         }
+
+        /*
+         * Fetching.
+         */
 
         private static void FetchConfig(Action onComplete, Action<ConfigException> onError)
         {
-            try
-            {
-                FirebaseRemoteConfig.DefaultInstance
-                                    .FetchAndActivateAsync()
-                                    .ContinueWithOnMainThread(task =>
+            FirebaseRemoteConfig.DefaultInstance
+                                .FetchAndActivateAsync()
+                                .ContinueWithOnMainThread(task =>
+                                 {
+                                     if (task.IsFaulted)
                                      {
-                                         if (task.IsFaulted)
-                                         {
-                                             onError?.Invoke(task.Exception.ToConfigException());
-                                             return;
-                                         }
+                                         onError?.Invoke(ConfigException.FromFirebaseException(task.Exception));
+                                         return;
+                                     }
 
-                                         onComplete?.Invoke();
-                                     });
-            }
-            catch (Exception exception)
-            {
-                onError?.Invoke(exception.ToConfigException());
-            }
+                                     onComplete?.Invoke();
+                                 });
         }
+
+        /*
+         * Parsing.
+         */
 
         private static void GetJsonAndParse(ConfigSettings settings, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
             switch (settings.Mode)
             {
                 case ConfigMode.Default:
-                    GetJsonDefault(settings, json =>
-                    {
-                        var config = (ConfigNode)JsonConvert.DeserializeObject(json, configType);
-                        onComplete?.Invoke(config);
-                    }, onError);
+                    GetDefaultJson(settings, json => { ParseDefault(json, configType, onComplete, onError); }, onError);
                     break;
                 case ConfigMode.Decomposed:
-                    GetDecomposed(settings, values =>
-                    {
-                        var instance = ParseDecomposed(values, configType);
-                        onComplete?.Invoke(instance);
-                    }, onError);
+                    GetDecomposedDictionary(settings, values => { ParseDecomposed(values, configType, onComplete, onError); }, onError);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -115,119 +101,195 @@ namespace Build1.UnityConfig.Repositories
             switch (settings.Mode)
             {
                 case ConfigMode.Default:
-                    GetJsonDefault(settings, json =>
-                    {
-                        var config = JsonConvert.DeserializeObject<T>(json);
-                        onComplete?.Invoke(config);
-                    }, onError);
+                    GetDefaultJson(settings, json => { ParseDefault(json, onComplete, onError); }, onError);
                     break;
                 case ConfigMode.Decomposed:
-                    GetDecomposed(settings, values =>
-                    {
-                        var instance = ParseDecomposed<T>(values);
-                        onComplete?.Invoke(instance);
-                    }, onError);
+                    GetDecomposedDictionary(settings, values => { ParseDecomposed(values, onComplete, onError); }, onError);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
 
-        private static void GetJsonDefault(ConfigSettings settings, Action<string> onComplete, Action<ConfigException> onError)
+        /*
+         * Default.
+         */
+
+        private static void GetDefaultJson(ConfigSettings settings, Action<string> onComplete, Action<ConfigException> onError)
         {
+            var field = settings.ParameterName;
+
+            if (!FirebaseRemoteConfig.DefaultInstance.AllValues.ContainsKey(field))
+            {
+                onError?.Invoke(new ConfigException(ConfigError.ConfigFieldNotFound, $"Field: \"{field}\"", null));
+                return;
+            }
+
+            var json = FirebaseRemoteConfig.DefaultInstance.AllValues[field].StringValue;
+
             try
             {
-                var field = settings.ParameterName;
+                if (!json.StartsWith("{") || !json.EndsWith("}"))
+                    json = json.Decompress();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
 
-                if (!FirebaseRemoteConfig.DefaultInstance.AllValues.ContainsKey(field))
+                onError?.Invoke(new ConfigException(ConfigError.ParsingError, "Decompression error", exception));
+                return;
+            }
+
+            onComplete?.Invoke(json);
+        }
+
+        private static void ParseDefault(string json, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
+        {
+            object config;
+
+            try
+            {
+                config = JsonConvert.DeserializeObject(json, configType);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+
+                onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}", exception));
+                return;
+            }
+
+            onComplete?.Invoke((ConfigNode)config);
+        }
+
+        private static void ParseDefault<T>(string json, Action<T> onComplete, Action<ConfigException> onError)
+        {
+            T config;
+
+            try
+            {
+                config = JsonConvert.DeserializeObject<T>(json);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+
+                onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}", exception));
+                return;
+            }
+
+            onComplete?.Invoke(config);
+        }
+
+        /*
+         * Decomposed.
+         */
+
+        private static void GetDecomposedDictionary(ConfigSettings settings, Action<Dictionary<string, object>> onComplete, Action<ConfigException> onError)
+        {
+            var parameters = new Dictionary<string, object>(FirebaseRemoteConfig.DefaultInstance.AllValues.Count);
+
+            foreach (var pair in FirebaseRemoteConfig.DefaultInstance.AllValues)
+            {
+                var value = pair.Value.StringValue;
+                if (value.Length >= 24)
                 {
-                    onError?.Invoke(new ConfigException(ConfigError.ConfigFieldNotFound, $"Parameter \"{field}\" not found in Firebase Remote Config."));
-                    return;
+                    if (!TryDecompress(value, out var valueDecompressed))
+                        onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decompression error", null));
+                    else
+                        parameters.Add(pair.Key, valueDecompressed);
                 }
+                else if (value.Length > 0)
+                {
+                    if (BooleanTruePattern.IsMatch(value))
+                    {
+                        parameters.Add(pair.Key, true);
+                    }
+                    else if (BooleanFalsePattern.IsMatch(value))
+                    {
+                        parameters.Add(pair.Key, false);
+                    }
+                    else if (long.TryParse(value, out var valueInt))
+                    {
+                        parameters.Add(pair.Key, valueInt);
+                    }
+                    else if (double.TryParse(value, out var valueDouble))
+                    {
+                        parameters.Add(pair.Key, valueDouble);
+                    }
+                    else
+                    {
+                        if (!TryDecompress(value, out var valueDecompressed))
+                            onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decompression error", null));
+                        else
+                            parameters.Add(pair.Key, valueDecompressed);
+                    }
+                }
+            }
 
-                var json = FirebaseRemoteConfig.DefaultInstance.AllValues[field].StringValue;
+            onComplete?.Invoke(parameters);
+        }
 
+        private static bool TryDecompress(string entry, out object value)
+        {
+            if (!entry.StartsWith("{") || !entry.EndsWith("}"))
+            {
                 try
                 {
-                    if (!json.StartsWith("{") || !json.EndsWith("}"))
-                        json = json.Decompress();
+                    value = entry.Decompress();
                 }
-                catch (Exception exception)
+                catch
                 {
-                    Debug.LogException(exception);
-
-                    onError?.Invoke(exception.ToConfigException());
-                    return;
+                    value = null;
+                    return false;
                 }
-
-                onComplete?.Invoke(json);
             }
-            catch (Exception exception)
+            else
             {
-                Debug.LogException(exception);
-
-                onError?.Invoke(exception.ToConfigException());
+                value = entry;
             }
+
+            return true;
         }
 
-        private static void GetDecomposed(ConfigSettings settings, Action<Dictionary<string, object>> onComplete, Action<ConfigException> onError)
+        private static void ParseDecomposed(IDictionary<string, object> values, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
+            ConfigNode instance;
+            
             try
             {
-                var parameters = new Dictionary<string, object>(FirebaseRemoteConfig.DefaultInstance.AllValues.Count);
-
-                foreach (var pair in FirebaseRemoteConfig.DefaultInstance.AllValues)
-                {
-                    var value = pair.Value.StringValue;
-                    if (value.Length >= 24)
-                    {
-                        parameters.Add(pair.Key, TryDecompress(value));
-                    }
-                    else if (value.Length > 0)
-                    {
-                        if (BooleanTruePattern.IsMatch(value))
-                        {
-                            parameters.Add(pair.Key, true);
-                        }
-                        else if (BooleanFalsePattern.IsMatch(value))
-                        {
-                            parameters.Add(pair.Key, false);
-                        }
-                        else if (long.TryParse(value, out var valueInt))
-                        {
-                            parameters.Add(pair.Key, valueInt);
-                        }
-                        else if (double.TryParse(value, out var valueDouble))
-                        {
-                            parameters.Add(pair.Key, valueDouble);
-                        }
-                        else
-                        {
-                            parameters.Add(pair.Key, TryDecompress(value));
-                        }
-                    }
-                }
-
-                onComplete?.Invoke(parameters);
+                instance = (ConfigNode)Activator.CreateInstance(configType);
+                FillDecomposedInstance(values, instance);
             }
             catch (Exception exception)
             {
-                Debug.LogException(exception);
-
-                onError?.Invoke(exception.ToConfigException());
+                onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
+                return;
             }
+         
+            onComplete.Invoke(instance);
         }
 
-        private static object TryDecompress(string value)
+        private static void ParseDecomposed<T>(IDictionary<string, object> values, Action<T> onComplete, Action<ConfigException> onError)
         {
-            if (!value.StartsWith("{") || !value.EndsWith("}"))
-                value = value.Decompress();
-            return value;
+            T instance;
+            
+            try
+            {
+                instance = Activator.CreateInstance<T>();
+                FillDecomposedInstance(values, instance);
+            }
+            catch (Exception exception)
+            {
+                onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
+                return;
+            }
+            
+            onComplete.Invoke(instance);
         }
 
-        private static ConfigNode ParseDecomposed(IDictionary<string, object> values, Type configType)
+        private static void FillDecomposedInstance(IDictionary<string, object> values, object instance)
         {
-            var instance   = (ConfigNode)Activator.CreateInstance(configType);
             var properties = instance.GetType().GetProperties();
 
             foreach (var property in properties)
@@ -249,7 +311,7 @@ namespace Build1.UnityConfig.Repositories
                     property.SetValue(instance, value);
                 }
             }
-            
+
             var method = instance.GetType().GetMethod("OnDeserialized", BindingFlags.NonPublic | BindingFlags.Instance);
             if (method == null)
             {
@@ -258,45 +320,6 @@ namespace Build1.UnityConfig.Repositories
             }
 
             method?.Invoke(instance, new object[] { null });
-
-            return instance;
-        }
-
-        private static T ParseDecomposed<T>(IDictionary<string, object> values)
-        {
-            var instance   = Activator.CreateInstance<T>();
-            var properties = instance.GetType().GetProperties();
-
-            foreach (var property in properties)
-            {
-                var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>();
-                if (jsonPropertyAttribute?.PropertyName == null)
-                    continue;
-
-                if (!values.TryGetValue(jsonPropertyAttribute.PropertyName, out var value))
-                    continue;
-
-                if (value is string json)
-                {
-                    var propertyInstance = JsonConvert.DeserializeObject(json, property.PropertyType);
-                    property.SetValue(instance, propertyInstance);
-                }
-                else
-                {
-                    property.SetValue(instance, value);
-                }
-            }
-            
-            var method = instance.GetType().GetMethod("OnDeserialized", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (method == null)
-            {
-                var methods = instance.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance);
-                method = methods.FirstOrDefault(m => m.GetCustomAttribute<OnDeserializedAttribute>() != null);
-            }
-            
-            method?.Invoke(instance, new object[] { null });
-
-            return instance;
         }
     }
 }
