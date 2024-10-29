@@ -40,8 +40,8 @@ namespace Build1.UnityConfig.Repositories
             if (settings is { FallbackEnabled: true, FallbackTimeout: > 0 })
                 configSettings.FetchTimeoutInMilliseconds = (ulong)settings.FallbackTimeout;
 
-                if (Debug.isDebugBuild)
-                    configSettings.MinimumFetchIntervalInMilliseconds = 0; // Refresh immediately when debugging.
+            if (Debug.isDebugBuild)
+                configSettings.MinimumFetchIntervalInMilliseconds = 0; // Refresh immediately when debugging.
 
             FirebaseRemoteConfig.DefaultInstance
                                 .SetConfigSettingsAsync(configSettings)
@@ -255,7 +255,7 @@ namespace Build1.UnityConfig.Repositories
         private static void ParseDecomposed(IDictionary<string, object> values, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
             ConfigNode instance;
-            
+
             try
             {
                 instance = (ConfigNode)Activator.CreateInstance(configType);
@@ -266,14 +266,14 @@ namespace Build1.UnityConfig.Repositories
                 onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
                 return;
             }
-         
+
             onComplete.Invoke(instance);
         }
 
         private static void ParseDecomposed<T>(IDictionary<string, object> values, Action<T> onComplete, Action<ConfigException> onError)
         {
             T instance;
-            
+
             try
             {
                 instance = Activator.CreateInstance<T>();
@@ -284,7 +284,7 @@ namespace Build1.UnityConfig.Repositories
                 onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
                 return;
             }
-            
+
             onComplete.Invoke(instance);
         }
 
