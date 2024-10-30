@@ -50,7 +50,6 @@ namespace Build1.UnityConfig.Repositories
             }
             catch (Exception exception)
             {
-                Debug.LogException(exception);
                 onError?.Invoke(new ConfigException(ConfigError.ResourceNotFound, $"Path: {path}", exception));
                 return;
             }
@@ -63,7 +62,6 @@ namespace Build1.UnityConfig.Repositories
             }
             catch (Exception exception)
             {
-                Debug.LogException(exception);
                 onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}", exception));
                 return;
             }
