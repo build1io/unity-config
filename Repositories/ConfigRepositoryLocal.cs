@@ -39,7 +39,8 @@ namespace Build1.UnityConfig.Repositories
 
         internal static void LoadFromCache<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
-            var path = $"{Application.persistentDataPath}/config_backup.json";
+            // Version in the file name must prevent issues while updating the app. 
+            var path = $"{Application.persistentDataPath}/config_backup_{Application.version}.json";
             
             string json;
             
@@ -74,7 +75,8 @@ namespace Build1.UnityConfig.Repositories
         {
             try
             {
-                var path = $"{Application.persistentDataPath}/config_backup.json";
+                // Version in the file name must prevent issues while updating the app.
+                var path = $"{Application.persistentDataPath}/config_backup_{Application.version}.json";
                 var json = config.ToJson(false);
             
                 File.WriteAllText(path, json);
