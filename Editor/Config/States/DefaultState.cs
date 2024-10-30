@@ -46,7 +46,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                 });
                 EGUI.Space(18);
 
-                EGUI.Checkbox("Reset to Firebase for Platform builds", settings.ResetSourceForPlatformBuilds, resetSelected =>
+                EGUI.Checkbox("Reset Source to Firebase when building", settings.ResetSourceForPlatformBuilds, resetSelected =>
                 {
                     settings.SetResetForPlatformBuilds(resetSelected);
                 });
@@ -54,9 +54,9 @@ namespace Build1.UnityConfig.Editor.Config.States
                 EGUI.Space(5);
 
                 var fallbackAvailable = settings.Source != ConfigSettings.SourceFirebase || settings.ResetSourceForPlatformBuilds; 
-                EGUI.Enabled(fallbackAvailable && !Application.isPlaying, () =>
+                EGUI.Enabled(fallbackAvailable && !Application.isPlaying && !model.InProgress, () =>
                 {
-                    EGUI.Checkbox("Fallback enabled", settings.FallbackEnabled, value =>
+                    EGUI.Checkbox("Fallback enabled", settings.FallbackEnabled, "Fallback, the version of the config insluded in the app build on release, will be used if loading time exceeds timeout.", value =>
                     {
                         settings.SetFallbackEnabled(value);
                     });
@@ -70,6 +70,12 @@ namespace Build1.UnityConfig.Editor.Config.States
                 
                 if (settings.FallbackEnabled)
                 {
+                    EGUI.Space(5);
+                    EGUI.Checkbox("Cache enabled", settings.CacheEnabled, "Successfully loaded config will be cached locally and used instead of the fallback version.", value =>
+                    {
+                        settings.SetCacheEnabled(value);
+                    });
+                    
                     EGUI.Space(18);
                     EGUI.Title("Fallback", TitleType.H3, EGUI.OffsetX(5));
                     EGUI.Label("If config loading will be taking too long the fallback version will be used. You may specify the timeout of fallback version application.");

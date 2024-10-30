@@ -13,6 +13,7 @@ namespace Build1.UnityConfig
         [JsonProperty("fallback_enabled")] public bool       FallbackEnabled              { get; private set; }
         [JsonProperty("fallback_source")]  public string     FallbackSource               { get; private set; }
         [JsonProperty("fallback_timeout")] public int        FallbackTimeout              { get; private set; }
+        [JsonProperty("cache_enabled")]    public bool       CacheEnabled                 { get; private set; }
 
         [JsonIgnore] public bool IsDirty { get; private set; }
 
@@ -105,6 +106,15 @@ namespace Build1.UnityConfig
             FallbackTimeout = value;
             SetDirty();
         }
+        
+        public void SetCacheEnabled(bool value)
+        {
+            if (CacheEnabled == value)
+                return;
+
+            CacheEnabled = value;
+            SetDirty();
+        }
 
         /*
          * Dirty.
@@ -150,7 +160,8 @@ namespace Build1.UnityConfig
                 Mode = ConfigMode.Default,
                 ParameterName = "config",
                 ResetSourceForPlatformBuilds = true,
-                FallbackEnabled = false
+                FallbackEnabled = false,
+                CacheEnabled = false
             };
         }
     }

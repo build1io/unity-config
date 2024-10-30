@@ -16,6 +16,7 @@ namespace Build1.UnityConfig
         [JsonProperty("param")]            public   string     ParameterName   { get; private set; }
         [JsonProperty("fallback_enabled")] public   bool       FallbackEnabled { get; private set; }
         [JsonProperty("fallback_timeout")] public   int        FallbackTimeout { get; private set; }
+        [JsonProperty("cache_enabled")]    public   bool       CacheEnabled    { get; private set; }
 
         private ConfigSettings() { }
 
@@ -64,7 +65,8 @@ namespace Build1.UnityConfig
                 Mode = settings.Mode,
                 ParameterName = settings.ParameterName,
                 FallbackEnabled = settings.FallbackEnabled,
-                FallbackTimeout = settings.FallbackTimeout
+                FallbackTimeout = settings.FallbackTimeout,
+                CacheEnabled = settings.CacheEnabled
             };
         }
     }
