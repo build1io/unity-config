@@ -15,7 +15,8 @@ namespace Build1.UnityConfig
     public sealed class UnityConfig
     {
         public static WebGLJavaScriptBridgeMode WebGLJavaScriptBridgeMode { get; set; } = WebGLJavaScriptBridgeMode.Namespaced;
-        public static bool                      FallbackUsed              { get; private set; }
+        public static bool                      FallbackConfigUsed        { get; private set; }
+        public static bool                      CachedConfigUsed          { get; private set; }
 
         #if UNITY_EDITOR
 
@@ -116,7 +117,7 @@ namespace Build1.UnityConfig
             var settings = ConfigSettings.Get();
             var configSource = settings.Source;
 
-            ConfigEditorModel.LoadConfig(configSource, Instance.ConfigType, node => { onComplete?.Invoke((T)node); }, exception =>
+            ConfigEditorModel.LoadConfig(configSource, Instance.ConfigType, settings, node => { onComplete?.Invoke((T)node); }, exception =>
             {
                 Debug.LogError(exception);
                 onError?.Invoke(exception);
@@ -127,12 +128,12 @@ namespace Build1.UnityConfig
         {
             return (T)CurrentEditorConfig;
         }
-        
+
         public static T GetCurrentEditorConfigSection<T>() where T : ConfigNode
         {
             return (T)CurrentEditorConfigSection;
         }
-        
+
         #endif
 
         private static void LoadConfigRuntime<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
@@ -142,39 +143,66 @@ namespace Build1.UnityConfig
             {
                 #if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE
 
-                void onErrorInner(ConfigException exception)
+                void CompleteHandler(T config)
+                {
+                    if (settings.CacheEnabled) 
+                        ConfigRepositoryLocal.SaveToCache(config);
+
+                    onComplete.Invoke(config);
+                }
+                
+                void ErrorHandler(ConfigException exception)
                 {
                     if (settings.FallbackEnabled && exception.error is ConfigError.NetworkError or ConfigError.ParsingError)
                     {
-                        FallbackUsed = true;
-                        ConfigRepositoryLocal.Load("config_fallback", onComplete, onError);
+                        FallbackConfigUsed = true;
+
+                        if (settings.CacheEnabled)
+                        {
+                            ConfigRepositoryLocal.LoadFromCache<T>(config =>
+                                                                   {
+                                                                       CachedConfigUsed = true;
+
+                                                                       onComplete.Invoke(config);
+                                                                   },
+                                                                   configException =>
+                                                                   {
+                                                                       if (configException.error is ConfigError.ResourceNotFound or ConfigError.ParsingError)
+                                                                           ConfigRepositoryLocal.LoadFromResources("config_fallback", onComplete, onError);
+                                                                       else
+                                                                           onError.Invoke(exception);
+                                                                   });
+                        }
+                        else
+                        {
+                            ConfigRepositoryLocal.LoadFromResources("config_fallback", onComplete, onError);
+                        }
                     }
                     else
                     {
-                        onError?.Invoke(exception);
+                        onError.Invoke(exception);
                     }
                 }
 
                 #if UNITY_WEBGL && !UNITY_EDITOR
-                
-                ConfigRepositoryFirebaseWebGL.Load(settings, onComplete, onErrorInner);
+
+                ConfigRepositoryFirebaseWebGL.Load(settings, CompleteHandler, ErrorHandler);
 
                 #else
-                
-                ConfigRepositoryFirebase.Load(settings, onComplete, onErrorInner);
-                
+
+                ConfigRepositoryFirebase.LoadInRuntime<T>(settings, CompleteHandler, ErrorHandler);
+
                 #endif
 
                 #else
-                
                 Debug.LogError("Remote Config loading from Firebase is unavailable. Probably you need to add Firebase Remote Config package into the project.");
                 onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
-                
+
                 #endif
             }
             else
             {
-                ConfigRepositoryLocal.Load("config", onComplete, onError);
+                ConfigRepositoryLocal.LoadFromResources("config", onComplete, onError);
             }
         }
     }

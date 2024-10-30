@@ -86,8 +86,10 @@ namespace Build1.UnityConfig.Editor.Config
         public void SelectConfig(string configName, Action onComplete = null)
         {
             InProgress = true;
+            
+            var settings = ConfigSettings.FromEditorSettings(Settings);
 
-            LoadConfig(configName, UnityConfig.Instance.ConfigType, config =>
+            LoadConfig(configName, UnityConfig.Instance.ConfigType, settings, config =>
             {
                 UnityConfig.CurrentEditorConfig = config;
                 
@@ -95,9 +97,13 @@ namespace Build1.UnityConfig.Editor.Config
                 SelectedConfigName = configName;
 
                 SelectedConfigSections = GetConfigSections(config);
-                SelectSection(SelectedConfigSections.IndexOf(LoadLastSelectedSection()));
+
+                var lastSelectedSection = LoadLastSelectedSection();
+                var lastSelectedSectionIndex = SelectedConfigSections.IndexOf(lastSelectedSection);
+                SelectSection(lastSelectedSectionIndex);
 
                 InProgress = false;
+                
                 onComplete?.Invoke();
             }, exception =>
             {
@@ -130,7 +136,9 @@ namespace Build1.UnityConfig.Editor.Config
                 return;
             }
 
-            LoadConfig(sourceConfigName, UnityConfig.Instance.ConfigType, config =>
+            var settings = ConfigSettings.FromEditorSettings(Settings);
+            
+            LoadConfig(sourceConfigName, UnityConfig.Instance.ConfigType, settings, config =>
             {
                 var json = config.ToJson(true);
                 ConfigProcessor.AddConfig(name, json, OnConfigAdded);
@@ -176,20 +184,20 @@ namespace Build1.UnityConfig.Editor.Config
          * Config Loading.
          */
 
-        internal static void LoadConfig(string configName, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
+        internal static void LoadConfig(string configName, Type configType, ConfigSettings settings, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
             // Firebase.
             if (configName == ConfigSettings.SourceFirebase)
-                LoadFirebaseConfig(configType, onComplete, onError);
+                LoadFirebaseConfig(configType, settings, onComplete, onError);
             else
                 LoadLocalConfig(configName, onComplete, onError);
         }
 
-        private static void LoadFirebaseConfig(Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
+        private static void LoadFirebaseConfig(Type configType, ConfigSettings settings, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
             #if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE
 
-            ConfigRepositoryFirebase.Load(null, configType, onComplete, onError);
+            ConfigRepositoryFirebase.LoadInEditor(settings, configType, onComplete, onError);
                 
             #else
                 
@@ -212,7 +220,7 @@ namespace Build1.UnityConfig.Editor.Config
             catch (Exception exception)
             {
                 Debug.LogException(exception);
-                onError?.Invoke(new ConfigException(ConfigError.ConfigResourceNotFound, $"Path: {path}", exception));
+                onError?.Invoke(new ConfigException(ConfigError.ResourceNotFound, $"Path: {path}", exception));
                 return;
             }
             

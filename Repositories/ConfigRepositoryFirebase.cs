@@ -19,29 +19,33 @@ namespace Build1.UnityConfig.Repositories
         private static readonly Regex BooleanTruePattern  = new("^(1|true|t|yes|y|on)$", RegexOptions.IgnoreCase);
         private static readonly Regex BooleanFalsePattern = new("^(0|false|f|no|n|off|)$", RegexOptions.IgnoreCase);
 
-        public static void Load(ConfigSettings settings, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
+        public static void LoadInEditor(ConfigSettings settings, Type configType, Action<ConfigNode> onComplete, Action<ConfigException> onError)
         {
-            SetConfigSettings(settings, () => { FetchConfig(() => { GetJsonAndParse(settings, configType, onComplete, onError); }, onError); }, onError);
+            SetConfigSettings(false, settings, () => { FetchConfig(() => { GetJsonAndParse(settings, configType, onComplete, onError); }, onError); }, onError);
         }
 
-        public static void Load<T>(ConfigSettings settings, Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
+        public static void LoadInRuntime<T>(ConfigSettings settings, Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
-            SetConfigSettings(settings, () => { FetchConfig(() => { GetJsonAndParse(settings, onComplete, onError); }, onError); }, onError);
+            SetConfigSettings(true, settings, () => { FetchConfig(() => { GetJsonAndParse(settings, onComplete, onError); }, onError); }, onError);
         }
 
         /*
          * Settings.
          */
 
-        private static void SetConfigSettings(ConfigSettings settings, Action onComplete, Action<ConfigException> onError)
+        private static void SetConfigSettings(bool runtime, ConfigSettings settings, Action onComplete, Action<ConfigException> onError)
         {
             var configSettings = new global::Firebase.RemoteConfig.ConfigSettings();
 
-            if (settings is { FallbackEnabled: true, FallbackTimeout: > 0 })
-                configSettings.FetchTimeoutInMilliseconds = (ulong)settings.FallbackTimeout;
-
-            if (Debug.isDebugBuild)
-                configSettings.MinimumFetchIntervalInMilliseconds = 0; // Refresh immediately when debugging.
+            switch (runtime)
+            {
+                case true when settings is { FallbackEnabled: true, FallbackTimeout: > 0 }:
+                    configSettings.FetchTimeoutInMilliseconds = (ulong)settings.FallbackTimeout;
+                    break;
+                case false:
+                    configSettings.MinimumFetchIntervalInMilliseconds = 0; // Refresh immediately when working in the Unity Editor.
+                    break;
+            }
 
             FirebaseRemoteConfig.DefaultInstance
                                 .SetConfigSettingsAsync(configSettings)
@@ -121,7 +125,7 @@ namespace Build1.UnityConfig.Repositories
 
             if (!FirebaseRemoteConfig.DefaultInstance.AllValues.ContainsKey(field))
             {
-                onError?.Invoke(new ConfigException(ConfigError.ConfigFieldNotFound, $"Field: \"{field}\"", null));
+                onError?.Invoke(new ConfigException(ConfigError.FieldNotFound, $"Field: \"{field}\"", null));
                 return;
             }
 
@@ -263,10 +267,12 @@ namespace Build1.UnityConfig.Repositories
             }
             catch (Exception exception)
             {
+                Debug.LogException(exception);
+                
                 onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
                 return;
             }
-
+            
             onComplete.Invoke(instance);
         }
 
@@ -281,6 +287,8 @@ namespace Build1.UnityConfig.Repositories
             }
             catch (Exception exception)
             {
+                Debug.LogException(exception);
+                
                 onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
                 return;
             }
