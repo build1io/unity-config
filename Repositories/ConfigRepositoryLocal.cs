@@ -39,8 +39,6 @@ namespace Build1.UnityConfig.Repositories
 
         internal static void LoadFromCache<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
-            Debug.Log("Loading from cache...");
-            
             var path = $"{Application.persistentDataPath}/config_backup.json";
             
             string json;
@@ -69,23 +67,17 @@ namespace Build1.UnityConfig.Repositories
                 return;
             }
             
-            Debug.Log("Loaded");
-            
             onComplete.Invoke(config);
         }
 
         internal static void SaveToCache<T>(T config) where T : ConfigNode
         {
-            Debug.Log("Saving to cache...");
-
             try
             {
                 var path = $"{Application.persistentDataPath}/config_backup.json";
                 var json = config.ToJson(false);
             
                 File.WriteAllText(path, json);
-                
-                Debug.Log("Saved");
             }
             catch (Exception exception)
             {
