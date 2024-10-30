@@ -50,6 +50,7 @@ namespace Build1.UnityConfig.Repositories
             }
             catch (Exception exception)
             {
+                // No error logging needed as when updating from one version of the app to another backup config will not be found.
                 onError?.Invoke(new ConfigException(ConfigError.ResourceNotFound, $"Path: {path}", exception));
                 return;
             }
@@ -62,6 +63,7 @@ namespace Build1.UnityConfig.Repositories
             }
             catch (Exception exception)
             {
+                Debug.LogException(exception);
                 onError?.Invoke(new ConfigException(ConfigError.ParsingError, $"JSON: {json}", exception));
                 return;
             }
