@@ -139,71 +139,120 @@ namespace Build1.UnityConfig
         private static void LoadConfigRuntime<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
             var settings = ConfigSettings.Get();
-            if (settings.Source == ConfigSettings.SourceFirebase)
+            if (settings.Source != ConfigSettings.SourceFirebase)
             {
-                #if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE
+                ConfigRepositoryLocal.LoadFromResources("config", onComplete, onError);
+                return;
+            }
 
-                void CompleteHandler(T config)
-                {
-                    if (settings.CacheEnabled) 
-                        ConfigRepositoryLocal.SaveToCache(config);
+            #if BUILD1_CONFIG_FIREBASE_REMOTE_CONFIG_AVAILABLE
 
-                    onComplete.Invoke(config);
-                }
-                
-                void ErrorHandler(ConfigException exception)
+            void CompleteHandler(T config)
+            {
+                if (settings.CacheEnabled)
+                    ConfigRepositoryLocal.SaveToCache(config);
+
+                onComplete.Invoke(config);
+            }
+
+            void ErrorHandler(ConfigException exception)
+            {
+                if (settings.FallbackEnabled && exception.error is ConfigError.NetworkError or ConfigError.ParsingError)
                 {
-                    if (settings.FallbackEnabled && exception.error is ConfigError.NetworkError or ConfigError.ParsingError)
+                    FallbackConfigUsed = true;
+
+                    if (settings.CacheEnabled)
                     {
-                        FallbackConfigUsed = true;
+                        ConfigRepositoryLocal.LoadFromCache<T>(config =>
+                                                               {
+                                                                   CachedConfigUsed = true;
 
-                        if (settings.CacheEnabled)
-                        {
-                            ConfigRepositoryLocal.LoadFromCache<T>(config =>
-                                                                   {
-                                                                       CachedConfigUsed = true;
-
-                                                                       onComplete.Invoke(config);
-                                                                   },
-                                                                   configException =>
-                                                                   {
-                                                                       if (configException.error is ConfigError.ResourceNotFound or ConfigError.ParsingError)
-                                                                           ConfigRepositoryLocal.LoadFromResources("config_fallback", onComplete, onError);
-                                                                       else
-                                                                           onError.Invoke(exception);
-                                                                   });
-                        }
-                        else
-                        {
-                            ConfigRepositoryLocal.LoadFromResources("config_fallback", onComplete, onError);
-                        }
+                                                                   onComplete.Invoke(config);
+                                                               },
+                                                               configException =>
+                                                               {
+                                                                   if (configException.error is ConfigError.ResourceNotFound or ConfigError.ParsingError)
+                                                                       ConfigRepositoryLocal.LoadFromResources("config_fallback", onComplete, onError);
+                                                                   else
+                                                                       onError.Invoke(exception);
+                                                               });
                     }
                     else
                     {
-                        onError.Invoke(exception);
+                        ConfigRepositoryLocal.LoadFromResources("config_fallback", onComplete, onError);
                     }
                 }
+                else
+                {
+                    onError.Invoke(exception);
+                }
+            }
 
-                #if UNITY_WEBGL && !UNITY_EDITOR
-
-                ConfigRepositoryFirebaseWebGL.Load(settings, CompleteHandler, ErrorHandler);
-
-                #else
-
-                ConfigRepositoryFirebase.LoadInRuntime<T>(settings, CompleteHandler, ErrorHandler);
-
-                #endif
-
-                #else
-                Debug.LogError("Remote Config loading from Firebase is unavailable. Probably you need to add Firebase Remote Config package into the project.");
-                onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
-
-                #endif
+            #if UNITY_WEBGL && !UNITY_EDITOR
+            
+            if (settings.FallbackEnabled && settings.CacheEnabled && settings.FastLoadingEnabled)
+            {
+                LoadFromCacheOrFallback(onComplete, onError);
+                
+                // Loading config in the background and waiting infinitely to save it to cache in the end.
+                ConfigRepositoryFirebaseWebGL.Load(settings, config =>
+                {
+                    ConfigRepositoryLocal.SaveToCache(config);
+                }, _ =>
+                {
+                    // Ignore for now.
+                });
             }
             else
             {
-                ConfigRepositoryLocal.LoadFromResources("config", onComplete, onError);
+                ConfigRepositoryFirebaseWebGL.Load(settings, CompleteHandler, ErrorHandler);    
             }
+
+            #else
+
+            if (settings.FallbackEnabled && settings.CacheEnabled && settings.FastLoadingEnabled)
+            {
+                LoadFromCacheOrFallback(onComplete, onError);
+                
+                // Loading config in the background and waiting infinitely to save it to cache in the end.
+                ConfigRepositoryFirebase.LoadInRuntime<T>(settings, false, config =>
+                {
+                    ConfigRepositoryLocal.SaveToCache(config);
+                }, _ =>
+                {
+                    // Ignore for now.
+                });
+            }
+            else
+            {
+                ConfigRepositoryFirebase.LoadInRuntime<T>(settings, true, CompleteHandler, ErrorHandler);    
+            }
+
+            #endif
+
+            #else
+            
+            Debug.LogError("Remote Config loading from Firebase is unavailable. Probably you need to add Firebase Remote Config package into the project.");
+            onError?.Invoke(new ConfigException(ConfigError.FirebaseRemoteConfigUnavailable));
+
+            #endif
+        }
+
+        private static void LoadFromCacheOrFallback<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
+        {
+            ConfigRepositoryLocal.LoadFromCache<T>(config =>
+                                                   {
+                                                       CachedConfigUsed = true;
+
+                                                       onComplete.Invoke(config);
+                                                   },
+                                                   configException =>
+                                                   {
+                                                       if (configException.error is ConfigError.ResourceNotFound or ConfigError.ParsingError)
+                                                           ConfigRepositoryLocal.LoadFromResources("config_fallback", onComplete, onError);
+                                                       else
+                                                           onError.Invoke(configException);
+                                                   });
         }
     }
 }

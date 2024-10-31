@@ -24,9 +24,9 @@ namespace Build1.UnityConfig.Repositories
             SetConfigSettings(false, settings, () => { FetchConfig(() => { GetJsonAndParse(settings, configType, onComplete, onError); }, onError); }, onError);
         }
 
-        public static void LoadInRuntime<T>(ConfigSettings settings, Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
+        public static void LoadInRuntime<T>(ConfigSettings settings, bool useTimeout, Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
-            SetConfigSettings(true, settings, () => { FetchConfig(() => { GetJsonAndParse(settings, onComplete, onError); }, onError); }, onError);
+            SetConfigSettings(useTimeout, settings, () => { FetchConfig(() => { GetJsonAndParse(settings, onComplete, onError); }, onError); }, onError);
         }
 
         /*
@@ -37,15 +37,11 @@ namespace Build1.UnityConfig.Repositories
         {
             var configSettings = new global::Firebase.RemoteConfig.ConfigSettings();
 
-            switch (runtime)
-            {
-                case true when settings is { FallbackEnabled: true, FallbackTimeout: > 0 }:
-                    configSettings.FetchTimeoutInMilliseconds = (ulong)settings.FallbackTimeout;
-                    break;
-                case false:
-                    configSettings.MinimumFetchIntervalInMilliseconds = 0; // Refresh immediately when working in the Unity Editor.
-                    break;
-            }
+            if (runtime && settings is { FallbackEnabled: true, FallbackTimeout: > 0 })
+                configSettings.FetchTimeoutInMilliseconds = (ulong)settings.FallbackTimeout;
+
+            if (Debug.isDebugBuild)
+                configSettings.MinimumFetchIntervalInMilliseconds = 0; // Refresh immediately when debugging.
 
             FirebaseRemoteConfig.DefaultInstance
                                 .SetConfigSettingsAsync(configSettings)
@@ -199,7 +195,7 @@ namespace Build1.UnityConfig.Repositories
                 if (value.Length >= 24)
                 {
                     if (!TryDecompress(value, out var valueDecompressed))
-                        onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decompression error", null));
+                        onError?.Invoke(new ConfigException(ConfigError.ParsingError, "Decompression error", null));
                     else
                         parameters.Add(pair.Key, valueDecompressed);
                 }
@@ -224,7 +220,7 @@ namespace Build1.UnityConfig.Repositories
                     else
                     {
                         if (!TryDecompress(value, out var valueDecompressed))
-                            onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decompression error", null));
+                            onError?.Invoke(new ConfigException(ConfigError.ParsingError, "Decompression error", null));
                         else
                             parameters.Add(pair.Key, valueDecompressed);
                     }
@@ -269,11 +265,11 @@ namespace Build1.UnityConfig.Repositories
             {
                 Debug.LogException(exception);
                 
-                onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
+                onError?.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
                 return;
             }
             
-            onComplete.Invoke(instance);
+            onComplete?.Invoke(instance);
         }
 
         private static void ParseDecomposed<T>(IDictionary<string, object> values, Action<T> onComplete, Action<ConfigException> onError)
@@ -289,11 +285,11 @@ namespace Build1.UnityConfig.Repositories
             {
                 Debug.LogException(exception);
                 
-                onError.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
+                onError?.Invoke(new ConfigException(ConfigError.ParsingError, "Decomposed instance filling error", exception));
                 return;
             }
 
-            onComplete.Invoke(instance);
+            onComplete?.Invoke(instance);
         }
 
         private static void FillDecomposedInstance(IDictionary<string, object> values, object instance)

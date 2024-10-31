@@ -11,12 +11,13 @@ namespace Build1.UnityConfig
         public const string SourceFirebase = "Firebase";
         public const string SourceDefault  = SourceFirebase;
 
-        [JsonProperty("source")]           public   string     Source          { get; private set; }
-        [JsonProperty("mode")]             internal ConfigMode Mode            { get; private set; }
-        [JsonProperty("param")]            public   string     ParameterName   { get; private set; }
-        [JsonProperty("fallback_enabled")] public   bool       FallbackEnabled { get; private set; }
-        [JsonProperty("fallback_timeout")] public   int        FallbackTimeout { get; private set; }
-        [JsonProperty("cache_enabled")]    public   bool       CacheEnabled    { get; private set; }
+        [JsonProperty("source")]               public   string     Source             { get; private set; }
+        [JsonProperty("mode")]                 internal ConfigMode Mode               { get; private set; }
+        [JsonProperty("param")]                public   string     ParameterName      { get; private set; }
+        [JsonProperty("fallback_enabled")]     public   bool       FallbackEnabled    { get; private set; }
+        [JsonProperty("fallback_timeout")]     public   int        FallbackTimeout    { get; private set; }
+        [JsonProperty("cache_enabled")]        public   bool       CacheEnabled       { get; private set; }
+        [JsonProperty("fast_loading_enabled")] public   bool       FastLoadingEnabled { get; private set; }
 
         private ConfigSettings() { }
 
@@ -66,7 +67,8 @@ namespace Build1.UnityConfig
                 ParameterName = settings.ParameterName,
                 FallbackEnabled = settings.FallbackEnabled,
                 FallbackTimeout = settings.FallbackTimeout,
-                CacheEnabled = settings.CacheEnabled
+                CacheEnabled = settings.CacheEnabled,
+                FastLoadingEnabled = settings.FastLoadingEnabled
             };
         }
     }

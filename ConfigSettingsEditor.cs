@@ -6,14 +6,15 @@ namespace Build1.UnityConfig
 {
     internal sealed class ConfigSettingsEditor
     {
-        [JsonProperty("source")]           public string     Source                       { get; private set; }
-        [JsonProperty("mode")]             public ConfigMode Mode                         { get; private set; }
-        [JsonProperty("param")]            public string     ParameterName                { get; private set; }
-        [JsonProperty("source_reset")]     public bool       ResetSourceForPlatformBuilds { get; private set; }
-        [JsonProperty("fallback_enabled")] public bool       FallbackEnabled              { get; private set; }
-        [JsonProperty("fallback_source")]  public string     FallbackSource               { get; private set; }
-        [JsonProperty("fallback_timeout")] public int        FallbackTimeout              { get; private set; }
-        [JsonProperty("cache_enabled")]    public bool       CacheEnabled                 { get; private set; }
+        [JsonProperty("source")]               public string     Source                       { get; private set; }
+        [JsonProperty("mode")]                 public ConfigMode Mode                         { get; private set; }
+        [JsonProperty("param")]                public string     ParameterName                { get; private set; }
+        [JsonProperty("source_reset")]         public bool       ResetSourceForPlatformBuilds { get; private set; }
+        [JsonProperty("fallback_enabled")]     public bool       FallbackEnabled              { get; private set; }
+        [JsonProperty("fallback_source")]      public string     FallbackSource               { get; private set; }
+        [JsonProperty("fallback_timeout")]     public int        FallbackTimeout              { get; private set; }
+        [JsonProperty("cache_enabled")]        public bool       CacheEnabled                 { get; private set; }
+        [JsonProperty("fast_loading_enabled")] public bool       FastLoadingEnabled           { get; private set; }
 
         [JsonIgnore] public bool IsDirty { get; private set; }
 
@@ -115,6 +116,15 @@ namespace Build1.UnityConfig
             CacheEnabled = value;
             SetDirty();
         }
+        
+        public void SetFastLoadingEnabled(bool value)
+        {
+            if (FastLoadingEnabled == value)
+                return;
+
+            FastLoadingEnabled = value;
+            SetDirty();
+        }
 
         /*
          * Dirty.
@@ -161,7 +171,8 @@ namespace Build1.UnityConfig
                 ParameterName = "config",
                 ResetSourceForPlatformBuilds = true,
                 FallbackEnabled = false,
-                CacheEnabled = false
+                CacheEnabled = false,
+                FastLoadingEnabled = false
             };
         }
     }

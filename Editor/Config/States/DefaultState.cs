@@ -75,6 +75,16 @@ namespace Build1.UnityConfig.Editor.Config.States
                     {
                         settings.SetCacheEnabled(value);
                     });
+
+                    EGUI.Space(5);
+                    
+                    EGUI.Enabled(settings.CacheEnabled, () =>
+                    {
+                        EGUI.Checkbox("Fast loading", settings.FastLoadingEnabled, "Config loads fast by using cached or fallback version. Remote config loading is started in background. Loaded config saved to cache for future sessions.", value =>
+                        {
+                            settings.SetFastLoadingEnabled(value);
+                        });
+                    });
                     
                     EGUI.Space(18);
                     EGUI.Title("Fallback", TitleType.H3, EGUI.OffsetX(5));
