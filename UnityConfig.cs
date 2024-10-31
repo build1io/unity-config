@@ -88,7 +88,7 @@ namespace Build1.UnityConfig
          * Loading.
          */
 
-        public static void LoadConfig<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
+        public static void LoadConfig<T>(bool isSandbox, Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
             #if UNITY_EDITOR
 
@@ -100,7 +100,7 @@ namespace Build1.UnityConfig
 
             #endif
 
-            LoadConfigRuntime(onComplete, onError);
+            LoadConfigRuntime(isSandbox, onComplete, onError);
         }
 
         #if UNITY_EDITOR
@@ -136,7 +136,7 @@ namespace Build1.UnityConfig
 
         #endif
 
-        private static void LoadConfigRuntime<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
+        private static void LoadConfigRuntime<T>(bool isSandbox, Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
             var settings = ConfigSettings.Get();
             if (settings.Source != ConfigSettings.SourceFirebase)
@@ -190,7 +190,7 @@ namespace Build1.UnityConfig
 
             #if UNITY_WEBGL && !UNITY_EDITOR
             
-            if (settings.FallbackEnabled && settings.CacheEnabled && settings.FastLoadingEnabled)
+            if (settings.FallbackEnabled && settings.CacheEnabled && settings.FastLoadingEnabled && !isSandbox)
             {
                 LoadFromCacheOrFallback(onComplete, onError);
                 
@@ -210,7 +210,7 @@ namespace Build1.UnityConfig
 
             #else
 
-            if (settings.FallbackEnabled && settings.CacheEnabled && settings.FastLoadingEnabled)
+            if (settings.FallbackEnabled && settings.CacheEnabled && settings.FastLoadingEnabled && !isSandbox)
             {
                 LoadFromCacheOrFallback(onComplete, onError);
                 
