@@ -242,6 +242,7 @@ namespace Build1.UnityConfig
         {
             ConfigRepositoryLocal.LoadFromCache<T>(config =>
                                                    {
+                                                       FallbackConfigUsed = true;
                                                        CachedConfigUsed = true;
 
                                                        onComplete.Invoke(config);
@@ -249,9 +250,17 @@ namespace Build1.UnityConfig
                                                    configException =>
                                                    {
                                                        if (configException.error is ConfigError.ResourceNotFound or ConfigError.ParsingError)
-                                                           ConfigRepositoryLocal.LoadFromResources("config_fallback", onComplete, onError);
+                                                       {
+                                                           ConfigRepositoryLocal.LoadFromResources<T>("config_fallback", config =>
+                                                           {
+                                                               FallbackConfigUsed = true;
+                                                               onComplete?.Invoke(config);
+                                                           }, onError);
+                                                       }
                                                        else
+                                                       {
                                                            onError.Invoke(configException);
+                                                       }
                                                    });
         }
     }
