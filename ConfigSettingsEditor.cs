@@ -114,6 +114,10 @@ namespace Build1.UnityConfig
                 return;
 
             CacheEnabled = value;
+
+            if (!CacheEnabled && FastLoadingEnabled)
+                SetFastLoadingEnabled(false);
+            
             SetDirty();
         }
         

@@ -35,9 +35,7 @@ namespace Build1.UnityConfig.Editor.Config.States
             EGUI.Scroll(ref _scrollPosition, () =>
             {
                 EGUI.Title("Source", TitleType.H3, EGUI.OffsetX(5));
-                EGUI.Space(5);
-
-                EGUI.Label("Selected config (any except Firebase) will be included and used in the build.\nFirebase will make app load config from Firebase remote.");
+                EGUI.Label("Selected config (except Firebase) will be included and used in the build.");
                 EGUI.Space(3);
 
                 EGUI.DropDown(configs, currentConfigSourceIndex, EGUI.DropDownHeight01, newIndex =>
@@ -56,7 +54,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                 var fallbackAvailable = settings.Source != ConfigSettings.SourceFirebase || settings.ResetSourceForPlatformBuilds; 
                 EGUI.Enabled(fallbackAvailable && !Application.isPlaying && !model.InProgress, () =>
                 {
-                    EGUI.Checkbox("Fallback enabled", settings.FallbackEnabled, "Fallback, the version of the config insluded in the app build on release, will be used if loading time exceeds timeout.", value =>
+                    EGUI.Checkbox("Fallback enabled", settings.FallbackEnabled, "Fallback is the version of the config included in the build and will be used if config loading failed or loading time exceeds the timeout.", value =>
                     {
                         settings.SetFallbackEnabled(value);
                     });
@@ -71,7 +69,7 @@ namespace Build1.UnityConfig.Editor.Config.States
                 if (settings.FallbackEnabled)
                 {
                     EGUI.Space(5);
-                    EGUI.Checkbox("Cache enabled", settings.CacheEnabled, "Successfully loaded config will be cached locally and used instead of the fallback version.", value =>
+                    EGUI.Checkbox("Cache enabled", settings.CacheEnabled, "When config is loaded from remote it's saved locally for further usage instead of the fallback version.", value =>
                     {
                         settings.SetCacheEnabled(value);
                     });
@@ -80,16 +78,19 @@ namespace Build1.UnityConfig.Editor.Config.States
                     
                     EGUI.Enabled(settings.CacheEnabled, () =>
                     {
-                        EGUI.Checkbox("Fast loading", settings.FastLoadingEnabled, "Config loads fast by using cached or fallback version. Remote config loading is started in background. Loaded config saved to cache for future sessions.", value =>
+                        EGUI.Checkbox("Fast loading", settings.FastLoadingEnabled, "Config loads fast by using the last saved locally config or the fallback one. Remote config loads in background and saved once it's loaded.", value =>
                         {
                             settings.SetFastLoadingEnabled(value);
                         });
+
+                        if (settings.FastLoadingEnabled)
+                        {
+                            EGUI.Space(10);
+                            EGUI.MessageBox("Fast loading will affect Remote Config A/B tests as the previous (or the fallback) version of the config will be served. Users will get the fallback config in the first session and relevant config in the second session.", MessageType.Warning);
+                        }
                     });
                     
-                    EGUI.Space(18);
-                    EGUI.Title("Fallback", TitleType.H3, EGUI.OffsetX(5));
-                    EGUI.Label("If config loading will be taking too long the fallback version will be used. You may specify the timeout of fallback version application.");
-                    EGUI.Space(3);
+                    EGUI.Space(10);
                     
                     var fallbackConfigs = configs.Where(c => c != ConfigSettings.SourceFirebase).ToList();
                     var fallbackConfigSourceIndex = fallbackConfigs.IndexOf(model.Settings.FallbackSource);
@@ -99,21 +100,26 @@ namespace Build1.UnityConfig.Editor.Config.States
                         settings.SetFallbackSource(fallbackConfigs[fallbackConfigSourceIndex]);
                     }
                     
-                    EGUI.Label("Source", EGUI.FontStyle(FontStyle.Bold));
+                    EGUI.Label("Fallback Source", EGUI.FontStyle(FontStyle.Bold));
                     EGUI.DropDown(fallbackConfigs, fallbackConfigSourceIndex, EGUI.DropDownHeight01, newIndex =>
                     {
                         settings.SetFallbackSource(fallbackConfigs[newIndex]);
                     });
-                    EGUI.Space(18);
-
-                    EGUI.Label("Timeout (Ms)", EGUI.FontStyle(FontStyle.Bold));
-                    EGUI.Int(settings.FallbackTimeout, EGUI.Height(EGUI.ButtonHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft)).OnChange(timeout =>
+                    
+                    if (!settings.CacheEnabled || !settings.FastLoadingEnabled)
                     {
-                        settings.SetFallbackTimeout(timeout);
-                    });
+                        EGUI.Space(20);
+                        EGUI.Label("Fallback Timeout Ms", EGUI.FontStyle(FontStyle.Bold));
+                        EGUI.Int(settings.FallbackTimeout, EGUI.Height(EGUI.ButtonHeight02), EGUI.TextAnchor(TextAnchor.MiddleLeft)).OnChange(timeout => { settings.SetFallbackTimeout(timeout); });
+                    }
+                    else
+                    {
+                        EGUI.Space(10);        
+                    }
                 }
                 
-                EGUI.Space(18);
+                EGUI.Space(20);
+                
                 EGUI.Title("Mode", TitleType.H3, EGUI.OffsetX(5));
                 EGUI.Label("The mode configures parsing and editor tools behavior.");
 

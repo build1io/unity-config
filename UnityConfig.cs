@@ -136,6 +136,11 @@ namespace Build1.UnityConfig
 
         #endif
 
+        private static void LoadConfigRuntime<T>(Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
+        {
+            LoadConfigRuntime(false, onComplete, onError);
+        }
+
         private static void LoadConfigRuntime<T>(bool isSandbox, Action<T> onComplete, Action<ConfigException> onError) where T : ConfigNode
         {
             var settings = ConfigSettings.Get();
