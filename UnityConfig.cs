@@ -14,9 +14,13 @@ namespace Build1.UnityConfig
 {
     public sealed class UnityConfig
     {
-        public static WebGLJavaScriptBridgeMode WebGLJavaScriptBridgeMode { get; set; } = WebGLJavaScriptBridgeMode.Namespaced;
-        public static bool                      FallbackConfigUsed        { get; private set; }
-        public static bool                      CachedConfigUsed          { get; private set; }
+        public static WebGLJavaScriptBridgeMode WebGLJavaScriptBridgeMode  { get; set; } = WebGLJavaScriptBridgeMode.Namespaced;
+        public static bool                      FallbackConfigUsed         { get; private set; }
+        public static bool                      CachedConfigUsed           { get; private set; }
+        public static bool                      RemoteVersionLoaded        { get; private set; }
+        public static ulong                     RemoteVersionLoadingTimeMs { get; private set; }
+
+        public static event Action<ConfigNode> OnLoadedFromRemote;
 
         #if UNITY_EDITOR
 
@@ -199,9 +203,16 @@ namespace Build1.UnityConfig
             {
                 LoadFromCacheOrFallback(onComplete, onError);
                 
+                var dateStart = DateTime.UtcNow;
+
                 // Loading config in the background and waiting infinitely to save it to cache in the end.
                 ConfigRepositoryFirebaseWebGL.Load(settings, config =>
                 {
+                    RemoteVersionLoaded = true;
+                    RemoteVersionLoadingTimeMs = Convert.ToUInt64((DateTime.UtcNow - dateStart).TotalMilliseconds);
+
+                    OnLoadedFromRemote?.Invoke(config);
+
                     ConfigRepositoryLocal.SaveToCache(config);
                 }, _ =>
                 {
@@ -210,7 +221,17 @@ namespace Build1.UnityConfig
             }
             else
             {
-                ConfigRepositoryFirebaseWebGL.Load(settings, CompleteHandler, ErrorHandler);    
+                var dateStart = DateTime.UtcNow;
+
+                ConfigRepositoryFirebaseWebGL.Load(settings, config =>
+                {
+                    RemoteVersionLoaded = true;
+                    RemoteVersionLoadingTimeMs = Convert.ToUInt64((DateTime.UtcNow - dateStart).TotalMilliseconds);
+
+                    OnLoadedFromRemote?.Invoke(config);
+                    
+                    CompleteHandler(config);
+                }, ErrorHandler);     
             }
 
             #else
@@ -218,10 +239,17 @@ namespace Build1.UnityConfig
             if (settings.FallbackEnabled && settings.CacheEnabled && settings.FastLoadingEnabled && !isSandbox)
             {
                 LoadFromCacheOrFallback(onComplete, onError);
-                
+
+                var dateStart = DateTime.UtcNow;
+
                 // Loading config in the background and waiting infinitely to save it to cache in the end.
                 ConfigRepositoryFirebase.LoadInRuntime<T>(settings, false, config =>
                 {
+                    RemoteVersionLoaded = true;
+                    RemoteVersionLoadingTimeMs = Convert.ToUInt64((DateTime.UtcNow - dateStart).TotalMilliseconds);
+                    
+                    OnLoadedFromRemote?.Invoke(config);
+
                     ConfigRepositoryLocal.SaveToCache(config);
                 }, _ =>
                 {
@@ -230,7 +258,17 @@ namespace Build1.UnityConfig
             }
             else
             {
-                ConfigRepositoryFirebase.LoadInRuntime<T>(settings, true, CompleteHandler, ErrorHandler);    
+                var dateStart = DateTime.UtcNow;
+
+                ConfigRepositoryFirebase.LoadInRuntime<T>(settings, true, config =>
+                {
+                    RemoteVersionLoaded = true;
+                    RemoteVersionLoadingTimeMs = Convert.ToUInt64((DateTime.UtcNow - dateStart).TotalMilliseconds);
+                    
+                    OnLoadedFromRemote?.Invoke(config);
+
+                    CompleteHandler(config);
+                }, ErrorHandler);
             }
 
             #endif
